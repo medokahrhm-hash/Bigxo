@@ -162,7 +162,7 @@
 <body>
 
     <h1>❌⭕ <span>إكس أو</span> الكبرى</h1>
-    <div id="status">⏳ جاري الاتصال…</div>
+    <div id="status">⏳ جاري التحميل...</div>
     
     <div class="frame">
         <div class="macro" id="macro"></div>
@@ -172,7 +172,7 @@
 
     <script>
         // ============================================================
-        // 1) إعدادات Firebase
+        // 1) إعدادات Firebase (تم التحقق من صحتها)
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyA0RjsdEk85fnZgciH-z8Uu-JT4dN_BLYQ",
@@ -202,9 +202,6 @@
             return null;
         }
 
-        // ============================================================
-        // 3) الحصول على هوية المستخدم
-        // ============================================================
         function getUser() {
             const tg = window.Telegram?.WebApp;
             const tgUser = tg?.initDataUnsafe?.user;
@@ -224,15 +221,6 @@
             return { id, name };
         }
 
-        // ============================================================
-        // 4) حالة اللعبة
-        // ============================================================
-        const params = new URLSearchParams(location.search);
-        const gameId = params.get("game") || "demo";
-        const gameRef = db.ref("games/" + gameId);
-        const me = getUser();
-        let mySymbol = null;
-
         function emptyState() {
             return {
                 boards: Array.from({length:9}, () => Array(9).fill(null)),
@@ -245,87 +233,52 @@
         }
 
         // ============================================================
-        // 5) الانضمام
+        // 3) تهيئة اللعبة (تم تبسيطها لجلب البيانات فوراً)
         // ============================================================
-        function joinGame() {
-            gameRef.transaction((current) => {
-                if (!current) {
-                    const s = emptyState();
-                    s.players.X = me;
-                    return s;
-                }
-                if (current.players?.X?.id === me.id) return current;
-                if (current.players?.O?.id === me.id) return current;
-                if (!current.players?.X) {
-                    current.players.X = me;
-                    return current;
-                }
-                if (!current.players?.O) {
-                    current.players.O = me;
-                    return current;
-                }
-                return current;
-            }, (err, committed, snap) => {
-                if (err) {
-                    console.error(err);
-                    document.getElementById("status").innerText = "❌ خطأ في الاتصال";
-                    return;
-                }
-                const s = snap.val();
-                if (!s) return;
-                if (s.players?.X?.id === me.id) mySymbol = "X";
-                else if (s.players?.O?.id === me.id) mySymbol = "O";
-                else {
-                    document.getElementById("status").innerText = "👀 أنت متفرج";
-                }
-                gameRef.on("value", (snap2) => {
-                    const data = snap2.val();
-                    if (data) render(data);
-                });
-            });
-        }
+        const params = new URLSearchParams(location.search);
+        const gameId = params.get("game") || "demo";
+        const gameRef = db.ref("games/" + gameId);
+        const me = getUser();
+        let mySymbol = null;
 
-        // ============================================================
-        // 6) العرض
-        // ============================================================
-        function statusText(s) {
-            if (!s) return "⏳ جاري التحميل...";
+        // دالة العرض الأساسية
+        function render(s) {
+            if (!s) {
+                console.warn("⚠️ لا توجد بيانات للعرض");
+                return;
+            }
+            
+            // تحديث شريط الحالة
             const xName = s.players?.X?.name || "؟";
             const oName = s.players?.O?.name || "؟";
-            let txt = `❎ ${xName}  |  ⭕ ${oName}`;
+            let statusText = `❎ ${xName}  |  ⭕ ${oName}`;
+            
             if (s.winner === "draw") {
-                txt += "\n🤝 تعادل!";
+                statusText += "\n🤝 تعادل!";
             } else if (s.winner) {
-                txt += `\n🎉 فاز: ${s.players[s.winner]?.name || s.winner}`;
+                statusText += `\n🎉 فاز: ${s.players[s.winner]?.name || s.winner}`;
             } else if (!s.players?.O) {
-                txt += "\n⏳ بانتظار لاعب ثانٍ";
+                statusText += "\n⏳ بانتظار لاعب ثانٍ";
             } else {
                 const turnName = s.players[s.turn]?.name || s.turn;
-                txt += `\n▶️ دور: ${turnName}`;
-                if (!mySymbol) txt += "\n👀 متفرج";
+                statusText += `\n▶️ دور: ${turnName}`;
             }
-            return txt;
-        }
-
-        function render(s) {
-            if (!s) return;
-            document.getElementById("status").innerText = statusText(s);
-            document.getElementById("reset").style.display = s.winner ? "block" : "none";
-
+            document.getElementById("status").innerText = statusText;
+            
+            // رسم اللوحات
             const macro = document.getElementById("macro");
             macro.innerHTML = "";
-
+            
             for (let b = 0; b < 9; b++) {
                 const mini = document.createElement("div");
                 mini.className = "mini";
                 
-                // ✅ تحديد ما إذا كانت اللوحة نشطة
                 const isActive = !s.winner && 
                     !s.boardWinners[b] && 
                     (s.activeBoard === null || s.activeBoard === b);
                 if (isActive) mini.classList.add("active");
                 if (s.boardWinners[b]) mini.classList.add("won");
-
+                
                 for (let c = 0; c < 9; c++) {
                     const btn = document.createElement("button");
                     const val = s.boards[b][c];
@@ -334,7 +287,7 @@
                     btn.onclick = () => playMove(s, b, c);
                     mini.appendChild(btn);
                 }
-
+                
                 if (s.boardWinners[b]) {
                     const ov = document.createElement("div");
                     const r = s.boardWinners[b];
@@ -342,22 +295,23 @@
                     ov.innerText = r === "draw" ? "➖" : r === "X" ? "❎" : "⭕";
                     mini.appendChild(ov);
                 }
-
+                
                 const badge = document.createElement("span");
                 badge.className = "badge";
                 badge.innerText = b + 1;
                 mini.appendChild(badge);
                 macro.appendChild(mini);
             }
+            
+            document.getElementById("reset").style.display = s.winner ? "block" : "none";
         }
 
         // ============================================================
-        // 7) تنفيذ الحركة - الإصدار المبسّط والمختبر
+        // 4) تنفيذ الحركة
         // ============================================================
         function playMove(s, b, c) {
-            // ✅ التحقق من أن المستخدم لاعب
             if (!mySymbol) {
-                // محاولة الانضمام كـ X إذا كان المكان فارغاً
+                // محاولة الانضمام كـ X أو O
                 if (!s.players?.X) {
                     const newState = { ...s };
                     newState.players.X = me;
@@ -378,7 +332,6 @@
                 return;
             }
 
-            // التحقق من صحة الحركة
             if (s.winner) {
                 document.getElementById("status").innerText = "⛔ انتهت اللعبة";
                 return;
@@ -433,11 +386,46 @@
             }
 
             gameRef.set(newState);
-            document.getElementById("status").innerText = "✅ تمت الحركة";
         }
 
         // ============================================================
-        // 8) إعادة الضبط
+        // 5) الاتصال بقاعدة البيانات وعرض اللوحات فوراً
+        // ============================================================
+        function startGame() {
+            // الاستماع الفوري لأي تغيير في قاعدة البيانات
+            gameRef.on("value", (snap) => {
+                const data = snap.val();
+                if (data) {
+                    // تحديد رمز المستخدم
+                    if (data.players?.X?.id === me.id) mySymbol = "X";
+                    else if (data.players?.O?.id === me.id) mySymbol = "O";
+                    else {
+                        // إذا لم يكن اللاعب موجوداً، حاول الانضمام كـ X
+                        if (!data.players?.X) {
+                            const newState = { ...data };
+                            newState.players.X = me;
+                            gameRef.set(newState);
+                            mySymbol = "X";
+                        } else if (!data.players?.O && data.players?.X?.id !== me.id) {
+                            const newState = { ...data };
+                            newState.players.O = me;
+                            gameRef.set(newState);
+                            mySymbol = "O";
+                        }
+                    }
+                    render(data);
+                } else {
+                    // إذا لم توجد بيانات، أنشئ لعبة جديدة
+                    const newGame = emptyState();
+                    newGame.players.X = me;
+                    gameRef.set(newGame);
+                    mySymbol = "X";
+                }
+            });
+        }
+
+        // ============================================================
+        // 6) زر إعادة الضبط
         // ============================================================
         document.getElementById("reset").onclick = () => {
             if (!mySymbol) {
@@ -452,23 +440,34 @@
         };
 
         // ============================================================
-        // 9) البدء
+        // 7) بدء التشغيل
         // ============================================================
-        joinGame();
-        console.log("👤", me, "🎮", gameId);
-
-        firebase.database().ref(".info/connected").on("value", (snap) => {
+        console.log("👤 المستخدم:", me);
+        console.log("🎮 معرف اللعبة:", gameId);
+        
+        // التحقق من اتصال Firebase
+        db.ref('.info/connected').on('value', (snap) => {
             if (snap.val() === true) {
-                console.log("✅ Firebase متصل");
-                const st = document.getElementById("status");
-                if (st.innerText === "⏳ جاري الاتصال…") {
-                    st.innerText = "⏳ جاري التحميل...";
-                }
+                console.log("✅ متصل بـ Firebase");
+                document.getElementById("status").innerText = "✅ متصل... جاري تحميل اللعبة";
+                startGame();
             } else {
-                console.log("❌ Firebase غير متصل");
+                console.log("❌ غير متصل بـ Firebase");
                 document.getElementById("status").innerText = "⚠️ لا يوجد اتصال بالخادم";
             }
         });
+
+        // مؤقت احتياطي: إذا لم يستجب Firebase خلال 3 ثوان، اعرض لوحات تجريبية
+        setTimeout(() => {
+            const macro = document.getElementById("macro");
+            if (macro.children.length === 0) {
+                console.warn("⚠️ Firebase لم يستجب، عرض لوحات تجريبية");
+                document.getElementById("status").innerText = "⚠️ جاري العرض التجريبي...";
+                const demo = emptyState();
+                demo.players.X = { id: "demo", name: "تجريبي" };
+                render(demo);
+            }
+        }, 3000);
     </script>
 
 </body>
