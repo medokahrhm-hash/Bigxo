@@ -45,6 +45,10 @@
             white-space: pre-line;
             line-height: 1.6;
             padding: 4px 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            max-width: 400px;
+            width: 100%;
         }
         
         .frame {
@@ -82,6 +86,7 @@
         .mini.active { 
             box-shadow: 0 0 0 2px #6FE7D2aa; 
             background: rgba(255,255,255,0.05); 
+            cursor: pointer;
         }
         .mini.won { 
             opacity: 0.6; 
@@ -211,10 +216,9 @@
         }
 
         /* =========================================================
-           3) الحصول على هوية المستخدم - الإصدار المحسّن
+           3) الحصول على هوية المستخدم
            ========================================================= */
         function getUser() {
-            // محاولة الحصول على المستخدم من تلغرام
             const tg = window.Telegram?.WebApp;
             const tgUser = tg?.initDataUnsafe?.user;
             
@@ -225,7 +229,6 @@
                 };
             }
             
-            // إذا كنا خارج تلغرام، اطلب من المستخدم إدخال اسمه
             let name = localStorage.getItem("player_name");
             if (!name) {
                 name = prompt("👋 مرحباً! ادخل اسمك لتبدأ اللعب:", "");
@@ -332,7 +335,7 @@
                 const symbol = s.winner === "X" ? "❎" : "⭕";
                 line += `\n🎉 فاز: ${winnerName} (${symbol})`;
             } else if (!s.players?.O) {
-                line += "\n⏳ بانتظار انضمام لاعب ثانٍ…";
+                line += "\n⏳ بانتظار انضمام لاعب ثانٍ…\n👆 اختر لوحة لتبدأ اللعب (أنت ❎)";
             } else {
                 const turnName = s.players[s.turn]?.name || s.turn;
                 const symbol = s.turn === "X" ? "❎" : "⭕";
@@ -358,7 +361,16 @@
                 const mini = document.createElement("div");
                 mini.className = "mini";
                 
-                const isActive = (s.activeBoard === null || s.activeBoard === b) && !s.boardWinners[b] && !s.winner;
+                // ✅ تحديد اللوحات النشطة
+                let isActive = false;
+                if (!s.winner) {
+                    if (s.activeBoard === null && !s.boardWinners[b]) {
+                        isActive = true;
+                    } else if (s.activeBoard === b && !s.boardWinners[b]) {
+                        isActive = true;
+                    }
+                }
+                
                 if (isActive) {
                     mini.classList.add("active");
                 }
@@ -399,10 +411,30 @@
            7) تنفيذ الحركة
            ========================================================= */
         function playMove(s, b, c) {
+            // ✅ التحقق من أن المستخدم هو اللاعب الأول (X) إذا لم ينضم أحد بعد
             if (!mySymbol) {
+                // إذا لم يحدد الرمز بعد، حاول الانضمام كـ X
+                if (!s.players?.O && s.players?.X?.id !== me.id) {
+                    // حاول الانضمام كـ X
+                    gameRef.transaction((current) => {
+                        if (!current) {
+                            const s2 = emptyState();
+                            s2.players.X = me;
+                            return s2;
+                        }
+                        if (!current.players?.X) {
+                            current.players.X = me;
+                            return current;
+                        }
+                        return current;
+                    });
+                    document.getElementById("status").innerText = "⏳ جاري الانضمام...";
+                    return;
+                }
                 document.getElementById("status").innerText = "❌ لم تنضم للعبة بعد!";
                 return;
             }
+            
             if (s.winner) {
                 document.getElementById("status").innerText = "⛔ انتهت اللعبة!";
                 return;
