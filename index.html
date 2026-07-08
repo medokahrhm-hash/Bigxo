@@ -162,7 +162,7 @@
 <body>
 
     <h1>❌⭕ <span>إكس أو</span> الكبرى</h1>
-    <div id="status">⏳ جاري الاتصال بالخادم...</div>
+    <div id="status">⏳ جاري التحميل...</div>
     
     <div class="frame">
         <div class="macro" id="macro"></div>
@@ -233,43 +233,56 @@
         }
 
         // ============================================================
-        // 3) تهيئة اللعبة والاتصال بالـ DB
+        // 3) المتغيرات العامة
         // ============================================================
         const params = new URLSearchParams(location.search);
         const gameId = params.get("game") || "demo";
         const gameRef = db.ref("games/" + gameId);
         const me = getUser();
-        let mySymbol = null; 
-        let latestState = null; 
+        let mySymbol = null;
+        let isFirstRender = true;
 
+        // ============================================================
+        // 4) دالة العرض الأساسية - مستقرة ولا تختفي
+        // ============================================================
         function render(s) {
-            latestState = s;
-            
-            // تحديد الرمز ديناميكياً من السيرفر لمنع ثغرات التزامن
+            if (!s) {
+                // إذا لم تكن هناك بيانات، أنشئ لعبة فورية
+                const newGame = emptyState();
+                newGame.players.X = me;
+                gameRef.set(newGame);
+                return;
+            }
+
+            // تحديث الرمز
             if (s.players?.X?.id === me.id) mySymbol = "X";
             else if (s.players?.O?.id === me.id) mySymbol = "O";
-            else mySymbol = null;
+            else {
+                // محاولة الانضمام التلقائي
+                tryJoin(s);
+                return;
+            }
 
+            // تحديث النص
             const xName = s.players?.X?.name || "بانتظار لاعب...";
             const oName = s.players?.O?.name || "بانتظار لاعب...";
-            
-            let roleBadge = mySymbol ? `(أنت ${mySymbol === 'X' ? '❎' : '⭕'})` : "(مُشاهد)";
+            const roleBadge = mySymbol ? `(أنت ${mySymbol === 'X' ? '❎' : '⭕'})` : "(مُشاهد)";
             let statusText = `❎ ${xName}  |  ⭕ ${oName} ${roleBadge}`;
             
             if (s.winner === "draw") {
-                statusText += "\n🤝 انتهت المباراة بالتعادل!";
+                statusText += "\n🤝 تعادل!";
             } else if (s.winner) {
-                statusText += `\n🎉 الفائز هو: ${s.players[s.winner]?.name || s.winner}`;
+                statusText += `\n🎉 الفائز: ${s.players[s.winner]?.name || s.winner}`;
             } else if (!s.players?.X || !s.players?.O) {
-                statusText += "\n⏳ بانتظار اكتمال اللاعبين لبدء التحدي...";
+                statusText += "\n⏳ بانتظار لاعب آخر...";
             } else {
                 const turnName = s.players[s.turn]?.name || s.turn;
-                statusText += `\n▶️ دور: ${turnName} (${s.turn === 'X' ? '❎' : '⭕'})`;
-                if(s.turn === mySymbol) statusText += " 👈 دورك الآن!";
+                statusText += `\n▶️ دور: ${turnName}`;
+                if (s.turn === mySymbol) statusText += " 👈 دورك!";
             }
-            
             document.getElementById("status").innerText = statusText;
-            
+
+            // رسم اللوحات (تظهر فوراً)
             const macro = document.getElementById("macro");
             macro.innerHTML = "";
             
@@ -307,127 +320,128 @@
                 macro.appendChild(mini);
             }
             
-            // إظهار زر إعادة التشغيل فقط للاعبين المشاركين عند انتهاء اللعبة
             document.getElementById("reset").style.display = (s.winner && mySymbol) ? "block" : "none";
+            isFirstRender = false;
         }
 
         // ============================================================
-        // 4) تنفيذ الحركة
+        // 5) محاولة الانضمام التلقائي
         // ============================================================
-        function playMove(b, c) {
-            const s = latestState;
-            if (!s) return;
-
-            if (!mySymbol) {
-                alert("🚫 أنت لست لاعباً في هذه المباراة (مشاهد فقط).");
-                return;
-            }
-            if (!s.players.X || !s.players.O) {
-                alert("⏳ لا يمكن اللعب حتى ينضم اللاعب الثاني.");
-                return;
-            }
-            if (s.winner) return;
-            if (s.turn !== mySymbol) {
-                alert("⏳ ليس دورك، انتظر خصمك!");
-                return;
-            }
-            if (s.boardWinners[b]) return;
-            if (s.activeBoard !== null && s.activeBoard !== b) {
-                alert(`📍 تحذير: يجب أن تلعب داخل اللوحة رقم ${s.activeBoard + 1}`);
-                return;
-            }
-            if (s.boards[b][c] !== null) return;
-
-            // تطبيق الحركة
-            const boards = s.boards.map(row => row.slice());
-            boards[b][c] = mySymbol;
-
-            const boardWinners = s.boardWinners.slice();
-            const local = checkWinner(boards[b]);
-            if (local) boardWinners[b] = local;
-
-            const macroResult = checkWinner(boardWinners.map(w => w === "draw" ? null : w));
-
-            let nextActive = c;
-            if (boardWinners[c]) nextActive = null;
-
-            const newState = { ...s, boards, boardWinners };
-
-            if (macroResult) {
-                newState.winner = macroResult;
-            } else if (boardWinners.every(w => w !== null)) {
-                newState.winner = "draw";
-            } else {
-                newState.activeBoard = nextActive;
-                newState.turn = mySymbol === "X" ? "O" : "X";
-            }
-
-            gameRef.set(newState);
-        }
-
-        // ============================================================
-        // 5) إدارة الانضمام التلقائي والدخول للغرفة
-        // ============================================================
-        function handleJoin(s) {
-            // إذا لم يكن هناك لاعب X، سجل اللاعب الحالي كـ X فوراً
+        function tryJoin(s) {
             if (!s.players?.X) {
                 gameRef.child("players/X").set(me);
-                return true;
+                return;
             }
-            // إذا كان خانة O فارغة واللاعب الحالي ليس هو نفسه X، سجله كـ O
             if (!s.players?.O && s.players?.X?.id !== me.id) {
                 gameRef.child("players/O").set(me);
-                return true;
+                return;
             }
-            return false;
+            // إذا كانت الغرفة مكتملة، اعرض كـ مشاهد
+            render(s);
         }
 
+        // ============================================================
+        // 6) تنفيذ الحركة
+        // ============================================================
+        function playMove(b, c) {
+            gameRef.once("value", (snap) => {
+                const s = snap.val();
+                if (!s) return;
+
+                if (!mySymbol) {
+                    alert("🚫 أنت مشاهد فقط!");
+                    return;
+                }
+                if (!s.players.X || !s.players.O) {
+                    alert("⏳ بانتظار اللاعب الثاني!");
+                    return;
+                }
+                if (s.winner) return;
+                if (s.turn !== mySymbol) {
+                    alert("⏳ ليس دورك!");
+                    return;
+                }
+                if (s.boardWinners[b]) return;
+                if (s.activeBoard !== null && s.activeBoard !== b) {
+                    alert(`📍 العب في اللوحة ${s.activeBoard + 1}`);
+                    return;
+                }
+                if (s.boards[b][c] !== null) return;
+
+                const boards = s.boards.map(row => row.slice());
+                boards[b][c] = mySymbol;
+
+                const boardWinners = s.boardWinners.slice();
+                const local = checkWinner(boards[b]);
+                if (local) boardWinners[b] = local;
+
+                const macroResult = checkWinner(boardWinners.map(w => w === "draw" ? null : w));
+
+                let nextActive = c;
+                if (boardWinners[c]) nextActive = null;
+
+                const newState = { ...s, boards, boardWinners };
+
+                if (macroResult) {
+                    newState.winner = macroResult;
+                } else if (boardWinners.every(w => w !== null)) {
+                    newState.winner = "draw";
+                } else {
+                    newState.activeBoard = nextActive;
+                    newState.turn = mySymbol === "X" ? "O" : "X";
+                }
+
+                gameRef.set(newState);
+            });
+        }
+
+        // ============================================================
+        // 7) زر إعادة الضبط
+        // ============================================================
+        document.getElementById("reset").onclick = () => {
+            if (!mySymbol) return;
+            gameRef.once("value", (snap) => {
+                const s = snap.val();
+                if (!s) return;
+                const fresh = emptyState();
+                fresh.players.X = s.players.X;
+                fresh.players.O = s.players.O;
+                fresh.turn = "X";
+                gameRef.set(fresh);
+            });
+        };
+
+        // ============================================================
+        // 8) تشغيل البث المباشر
+        // ============================================================
         function startGame() {
             gameRef.on("value", (snap) => {
                 const data = snap.val();
                 if (!data) {
-                    // إنشاء غرفة جديدة تماماً إذا كانت فارغة
                     const newGame = emptyState();
                     newGame.players.X = me;
                     gameRef.set(newGame);
                 } else {
-                    // محاولة إدخال اللاعب للغرفة تلقائياً إذا كان هناك مكان شاغر
-                    const joined = handleJoin(data);
-                    if (!joined) {
-                        render(data);
-                    }
+                    render(data);
                 }
             });
         }
 
         // ============================================================
-        // 6) زر إعادة الضبط الذكي (يحافظ على اللاعبين)
-        // ============================================================
-        document.getElementById("reset").onclick = () => {
-            if (!mySymbol || !latestState) return;
-            
-            const freshState = emptyState();
-            // الحفاظ على هويات اللاعبين لتسهيل الانتقام (Rematch) مباشرة دون الحاجة لإعادة التسجيل
-            freshState.players.X = latestState.players.X;
-            freshState.players.O = latestState.players.O;
-            
-            // تبديل الأدوار للعبة القادمة بشكل عادل (الخاسر يبدأ أو تبديل عشوائي)
-            freshState.turn = latestState.winner && latestState.winner !== 'draw' ? latestState.winner : "X";
-
-            gameRef.set(freshState);
-        };
-
-        // ============================================================
-        // 7) الاتصال وبدء العمل
+        // 9) بدء التشغيل
         // ============================================================
         db.ref('.info/connected').on('value', (snap) => {
             if (snap.val() === true) {
-                document.getElementById("status").innerText = "✅ متصل... جاري الدخول للغرفة";
+                document.getElementById("status").innerText = "✅ متصل... جاري التحميل";
                 startGame();
             } else {
-                document.getElementById("status").innerText = "⚠️ انقطع الاتصال... جاري محاولة إعادة الاتصال";
+                document.getElementById("status").innerText = "⚠️ جاري إعادة الاتصال...";
             }
         });
+
+        console.log("👤 المستخدم:", me);
+        console.log("🎮 معرف اللعبة:", gameId);
     </script>
+
 </body>
 </html>
