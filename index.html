@@ -13,7 +13,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Rakkas&display=swap');
         
         * { box-sizing: border-box; }
-        
         body {
             margin: 0;
             min-height: 100vh;
@@ -21,16 +20,15 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 24px 12px;
+            padding: 16px 12px;
             background: radial-gradient(ellipse at 25% 15%, #24382c 0%, #1a2b21 45%, #10201799 100%), #16241c;
             font-family: 'Cairo', 'Segoe UI', sans-serif;
             color: #EDEFEA;
             user-select: none;
         }
-        
         h1 {
             font-family: 'Rakkas', serif;
-            font-size: 32px;
+            font-size: 28px;
             margin: 0 0 4px;
             text-align: center;
         }
@@ -40,37 +38,34 @@
             text-align: center;
             color: #9FB0A6;
             font-size: 14px;
-            margin-bottom: 16px;
-            min-height: 40px;
+            margin-bottom: 12px;
+            min-height: 50px;
             white-space: pre-line;
             line-height: 1.6;
-            padding: 4px 8px;
-            background: rgba(0,0,0,0.2);
+            padding: 6px 12px;
+            background: rgba(0,0,0,0.25);
             border-radius: 8px;
             max-width: 400px;
             width: 100%;
         }
         
         .frame {
-            padding: 10px;
+            padding: 8px;
             border-radius: 12px;
-            background: repeating-linear-gradient(115deg, #6b4a30, #6b4a30 6px, #5c3e28 6px, #5c3e28 12px);
+            background: repeating-linear-gradient(115deg, #6b4a30, #6b4a30 5px, #5c3e28 5px, #5c3e28 10px);
             box-shadow: 0 10px 30px rgba(0,0,0,0.45);
-            max-width: 100%;
-            overflow-x: auto;
         }
         
         .macro {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-            padding: 6px;
+            gap: 5px;
+            padding: 5px;
             background: #1c2e22;
             border-radius: 8px;
             box-shadow: inset 0 0 25px rgba(0,0,0,0.4);
-            min-width: 280px;
             width: 100%;
-            max-width: 400px;
+            max-width: 380px;
             margin: 0 auto;
         }
         
@@ -84,13 +79,10 @@
             aspect-ratio: 1;
         }
         .mini.active { 
-            box-shadow: 0 0 0 2px #6FE7D2aa; 
-            background: rgba(255,255,255,0.05); 
-            cursor: pointer;
+            box-shadow: 0 0 0 2px #6FE7D2aa, 0 0 15px #6FE7D244; 
+            background: rgba(255,255,255,0.06); 
         }
-        .mini.won { 
-            opacity: 0.6; 
-        }
+        .mini.won { opacity: 0.5; }
         
         .cell {
             width: 100%;
@@ -98,19 +90,19 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(16px, 4vw, 24px);
+            font-size: clamp(18px, 4.5vw, 26px);
             background: transparent;
             border: none;
             color: inherit;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: background 0.1s;
             aspect-ratio: 1;
+            border-radius: 4px;
         }
-        .cell:active {
-            background: rgba(255,255,255,0.05);
-        }
-        .cell.x { color: #6FE7D2; text-shadow: 0 0 4px #6FE7D266; }
-        .cell.o { color: #FFA05C; text-shadow: 0 0 4px #FFA05C66; }
+        .cell:hover { background: rgba(255,255,255,0.03); }
+        .cell:active { background: rgba(255,255,255,0.08); }
+        .cell.x { color: #6FE7D2; text-shadow: 0 0 8px #6FE7D244; }
+        .cell.o { color: #FFA05C; text-shadow: 0 0 8px #FFA05C44; }
         
         .mini-winner {
             position: absolute;
@@ -118,19 +110,19 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(28px, 7vw, 42px);
-            background: rgba(16,24,18,0.8);
+            font-size: clamp(30px, 8vw, 46px);
+            background: rgba(16,24,18,0.82);
             border-radius: 6px;
             pointer-events: none;
         }
-        .mini-winner.x { color: #6FE7D2aa; }
-        .mini-winner.o { color: #FFA05Caa; }
-        .mini-winner.draw { color: #9FB0A6aa; }
+        .mini-winner.x { color: #6FE7D2cc; }
+        .mini-winner.o { color: #FFA05Ccc; }
+        .mini-winner.draw { color: #9FB0A6cc; }
         
         .badge {
             position: absolute;
-            top: -6px;
-            right: -6px;
+            top: -5px;
+            right: -5px;
             width: 18px;
             height: 18px;
             font-size: 9px;
@@ -140,32 +132,30 @@
             background: #3a2c1e;
             color: #9FB0A6;
             border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.12);
             font-weight: 700;
         }
         
         #reset {
-            margin-top: 18px;
-            padding: 10px 24px;
+            margin-top: 14px;
+            padding: 8px 20px;
             border-radius: 8px;
-            border: 1.5px dashed rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.03);
+            border: 1.5px dashed rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.02);
             color: #9FB0A6;
             font-family: 'Cairo', sans-serif;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
             transition: all 0.2s;
             display: none;
         }
-        #reset:active {
-            background: rgba(255,255,255,0.08);
-        }
+        #reset:active { background: rgba(255,255,255,0.06); }
         
         @media (max-width: 420px) {
-            .macro { gap: 4px; padding: 4px; min-width: unset; }
-            .frame { padding: 6px; }
-            #status { font-size: 12px; min-height: 32px; }
-            h1 { font-size: 24px; }
+            .macro { gap: 4px; padding: 4px; }
+            .frame { padding: 5px; }
+            #status { font-size: 12px; min-height: 44px; }
+            h1 { font-size: 22px; }
         }
     </style>
 </head>
@@ -175,30 +165,27 @@
     <div id="status">⏳ جاري الاتصال…</div>
     
     <div class="frame">
-        <div class="macro" id="macro">
-            <!-- سيتم إنشاء الأزرار بواسطة JavaScript -->
-        </div>
+        <div class="macro" id="macro"></div>
     </div>
     
-    <button id="reset">🔄 لعبة جديدة بنفس الرابط</button>
+    <button id="reset">🔄 لعبة جديدة</button>
 
     <script>
-        /* =========================================================
-           1) إعدادات Firebase
-           ========================================================= */
+        // ============================================================
+        // 1) إعدادات Firebase
+        // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyA0RjsdEk85fnZgciH-z8Uu-JT4dN_BLYQ",
             authDomain: "xobot-d7b7f.firebaseapp.com",
             databaseURL: "https://xobot-d7b7f-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "xobot-d7b7f",
         };
-        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        /* =========================================================
-           2) الثوابت والدوال المساعدة
-           ========================================================= */
+        // ============================================================
+        // 2) دوال مساعدة
+        // ============================================================
         const LINES = [
             [0,1,2],[3,4,5],[6,7,8],
             [0,3,6],[1,4,7],[2,5,8],
@@ -215,47 +202,36 @@
             return null;
         }
 
-        /* =========================================================
-           3) الحصول على هوية المستخدم
-           ========================================================= */
+        // ============================================================
+        // 3) الحصول على هوية المستخدم
+        // ============================================================
         function getUser() {
             const tg = window.Telegram?.WebApp;
             const tgUser = tg?.initDataUnsafe?.user;
-            
             if (tgUser && tgUser.first_name) {
-                return { 
-                    id: String(tgUser.id), 
-                    name: tgUser.first_name || "لاعب" 
-                };
+                return { id: String(tgUser.id), name: tgUser.first_name };
             }
-            
             let name = localStorage.getItem("player_name");
             if (!name) {
-                name = prompt("👋 مرحباً! ادخل اسمك لتبدأ اللعب:", "");
-                if (!name || name.trim() === "") {
-                    name = "زائر_" + Math.random().toString(36).slice(2, 4);
-                }
+                name = prompt("👋 ادخل اسمك:", "") || "زائر";
                 localStorage.setItem("player_name", name);
             }
-            
             let id = localStorage.getItem("player_id");
             if (!id) {
-                id = "player_" + Math.random().toString(36).slice(2, 8);
+                id = "p_" + Math.random().toString(36).slice(2, 7);
                 localStorage.setItem("player_id", id);
             }
-            
-            return { id: id, name: name };
+            return { id, name };
         }
 
-        /* =========================================================
-           4) تهيئة اللعبة
-           ========================================================= */
+        // ============================================================
+        // 4) حالة اللعبة
+        // ============================================================
         const params = new URLSearchParams(location.search);
         const gameId = params.get("game") || "demo";
         const gameRef = db.ref("games/" + gameId);
         const me = getUser();
         let mySymbol = null;
-        let gameData = null;
 
         function emptyState() {
             return {
@@ -268,9 +244,9 @@
             };
         }
 
-        /* =========================================================
-           5) الانضمام للعبة
-           ========================================================= */
+        // ============================================================
+        // 5) الانضمام
+        // ============================================================
         function joinGame() {
             gameRef.transaction((current) => {
                 if (!current) {
@@ -291,160 +267,128 @@
                 return current;
             }, (err, committed, snap) => {
                 if (err) {
-                    console.error("خطأ في الانضمام:", err);
-                    document.getElementById("status").innerText = "❌ خطأ في الاتصال بقاعدة البيانات";
+                    console.error(err);
+                    document.getElementById("status").innerText = "❌ خطأ في الاتصال";
                     return;
                 }
-                
                 const s = snap.val();
-                if (!s) {
-                    document.getElementById("status").innerText = "❌ لم يتم إنشاء اللعبة";
-                    return;
-                }
-                
+                if (!s) return;
                 if (s.players?.X?.id === me.id) mySymbol = "X";
                 else if (s.players?.O?.id === me.id) mySymbol = "O";
                 else {
-                    document.getElementById("status").innerText = "👀 اللعبة مكتملة، أنت في وضع المشاهدة";
+                    document.getElementById("status").innerText = "👀 أنت متفرج";
                 }
-                
                 gameRef.on("value", (snap2) => {
                     const data = snap2.val();
-                    if (data) {
-                        gameData = data;
-                        render(data);
-                    }
+                    if (data) render(data);
                 });
             });
         }
 
-        /* =========================================================
-           6) عرض اللعبة
-           ========================================================= */
+        // ============================================================
+        // 6) العرض
+        // ============================================================
         function statusText(s) {
-            if (!s) return "⏳ جاري تحميل اللعبة...";
-            
-            const xName = s.players?.X?.name || "بانتظار لاعب";
-            const oName = s.players?.O?.name || "بانتظار لاعب";
-            let line = `❎ ${xName}  |  ⭕ ${oName}`;
-            
+            if (!s) return "⏳ جاري التحميل...";
+            const xName = s.players?.X?.name || "؟";
+            const oName = s.players?.O?.name || "؟";
+            let txt = `❎ ${xName}  |  ⭕ ${oName}`;
             if (s.winner === "draw") {
-                line += "\n🤝 تعادل!";
+                txt += "\n🤝 تعادل!";
             } else if (s.winner) {
-                const winnerName = s.players[s.winner]?.name || s.winner;
-                const symbol = s.winner === "X" ? "❎" : "⭕";
-                line += `\n🎉 فاز: ${winnerName} (${symbol})`;
+                txt += `\n🎉 فاز: ${s.players[s.winner]?.name || s.winner}`;
             } else if (!s.players?.O) {
-                line += "\n⏳ بانتظار انضمام لاعب ثانٍ…\n👆 اختر لوحة لتبدأ اللعب (أنت ❎)";
+                txt += "\n⏳ بانتظار لاعب ثانٍ";
             } else {
                 const turnName = s.players[s.turn]?.name || s.turn;
-                const symbol = s.turn === "X" ? "❎" : "⭕";
-                line += `\n▶️ دور: ${turnName} (${symbol})`;
-                if (!mySymbol) line += "\n👀 أنت بوضع المشاهدة";
+                txt += `\n▶️ دور: ${turnName}`;
+                if (!mySymbol) txt += "\n👀 متفرج";
             }
-            return line;
+            return txt;
         }
 
         function render(s) {
             if (!s) return;
-            
-            const statusEl = document.getElementById("status");
-            statusEl.innerText = statusText(s);
-            
-            const resetBtn = document.getElementById("reset");
-            resetBtn.style.display = s.winner ? "block" : "none";
-            
+            document.getElementById("status").innerText = statusText(s);
+            document.getElementById("reset").style.display = s.winner ? "block" : "none";
+
             const macro = document.getElementById("macro");
             macro.innerHTML = "";
-            
+
             for (let b = 0; b < 9; b++) {
                 const mini = document.createElement("div");
                 mini.className = "mini";
                 
-                // ✅ تحديد اللوحات النشطة
-                let isActive = false;
-                if (!s.winner) {
-                    if (s.activeBoard === null && !s.boardWinners[b]) {
-                        isActive = true;
-                    } else if (s.activeBoard === b && !s.boardWinners[b]) {
-                        isActive = true;
-                    }
-                }
-                
-                if (isActive) {
-                    mini.classList.add("active");
-                }
-                
-                if (s.boardWinners[b]) {
-                    mini.classList.add("won");
-                }
-                
+                // ✅ تحديد ما إذا كانت اللوحة نشطة
+                const isActive = !s.winner && 
+                    !s.boardWinners[b] && 
+                    (s.activeBoard === null || s.activeBoard === b);
+                if (isActive) mini.classList.add("active");
+                if (s.boardWinners[b]) mini.classList.add("won");
+
                 for (let c = 0; c < 9; c++) {
                     const btn = document.createElement("button");
                     const val = s.boards[b][c];
                     btn.className = "cell" + (val === "X" ? " x" : val === "O" ? " o" : "");
                     btn.innerText = val === "X" ? "❎" : val === "O" ? "⭕" : "";
-                    btn.setAttribute("data-board", b);
-                    btn.setAttribute("data-cell", c);
                     btn.onclick = () => playMove(s, b, c);
                     mini.appendChild(btn);
                 }
-                
+
                 if (s.boardWinners[b]) {
-                    const overlay = document.createElement("div");
-                    const result = s.boardWinners[b];
-                    overlay.className = "mini-winner " + (result === "X" ? "x" : result === "O" ? "o" : "draw");
-                    overlay.innerText = result === "draw" ? "➖" : result === "X" ? "❎" : "⭕";
-                    mini.appendChild(overlay);
+                    const ov = document.createElement("div");
+                    const r = s.boardWinners[b];
+                    ov.className = "mini-winner " + (r === "X" ? "x" : r === "O" ? "o" : "draw");
+                    ov.innerText = r === "draw" ? "➖" : r === "X" ? "❎" : "⭕";
+                    mini.appendChild(ov);
                 }
-                
+
                 const badge = document.createElement("span");
                 badge.className = "badge";
                 badge.innerText = b + 1;
                 mini.appendChild(badge);
-                
                 macro.appendChild(mini);
             }
         }
 
-        /* =========================================================
-           7) تنفيذ الحركة
-           ========================================================= */
+        // ============================================================
+        // 7) تنفيذ الحركة - الإصدار المبسّط والمختبر
+        // ============================================================
         function playMove(s, b, c) {
-            // ✅ التحقق من أن المستخدم هو اللاعب الأول (X) إذا لم ينضم أحد بعد
+            // ✅ التحقق من أن المستخدم لاعب
             if (!mySymbol) {
-                // إذا لم يحدد الرمز بعد، حاول الانضمام كـ X
-                if (!s.players?.O && s.players?.X?.id !== me.id) {
-                    // حاول الانضمام كـ X
-                    gameRef.transaction((current) => {
-                        if (!current) {
-                            const s2 = emptyState();
-                            s2.players.X = me;
-                            return s2;
-                        }
-                        if (!current.players?.X) {
-                            current.players.X = me;
-                            return current;
-                        }
-                        return current;
-                    });
-                    document.getElementById("status").innerText = "⏳ جاري الانضمام...";
+                // محاولة الانضمام كـ X إذا كان المكان فارغاً
+                if (!s.players?.X) {
+                    const newState = { ...s };
+                    newState.players.X = me;
+                    gameRef.set(newState);
+                    mySymbol = "X";
+                    document.getElementById("status").innerText = "✅ انضممت كـ ❎";
                     return;
                 }
-                document.getElementById("status").innerText = "❌ لم تنضم للعبة بعد!";
+                if (!s.players?.O && s.players?.X?.id !== me.id) {
+                    const newState = { ...s };
+                    newState.players.O = me;
+                    gameRef.set(newState);
+                    mySymbol = "O";
+                    document.getElementById("status").innerText = "✅ انضممت كـ ⭕";
+                    return;
+                }
+                document.getElementById("status").innerText = "❌ لا يمكنك الانضمام";
                 return;
             }
-            
+
+            // التحقق من صحة الحركة
             if (s.winner) {
-                document.getElementById("status").innerText = "⛔ انتهت اللعبة!";
+                document.getElementById("status").innerText = "⛔ انتهت اللعبة";
                 return;
             }
             if (s.turn !== mySymbol) {
-                document.getElementById("status").innerText = "⏳ ليس دورك!";
+                document.getElementById("status").innerText = "⏳ ليس دورك";
                 return;
             }
             if (!s.players?.O) {
-                document.getElementById("status").innerText = "⏳ بانتظار لاعب ثانٍ…";
+                document.getElementById("status").innerText = "⏳ بانتظار لاعب ثانٍ";
                 return;
             }
             if (s.boardWinners[b]) {
@@ -452,32 +396,33 @@
                 return;
             }
             if (s.activeBoard !== null && s.activeBoard !== b) {
-                document.getElementById("status").innerText = `📍 لازم تلعب في اللوحة رقم ${s.activeBoard + 1}`;
+                document.getElementById("status").innerText = `📍 لازم تلعب في اللوحة ${s.activeBoard + 1}`;
                 return;
             }
             if (s.boards[b][c] !== null) {
                 document.getElementById("status").innerText = "🚫 هذا المربع محجوز";
                 return;
             }
-            
+
+            // تنفيذ الحركة
             const boards = s.boards.map(row => row.slice());
             boards[b][c] = mySymbol;
-            
+
             const boardWinners = s.boardWinners.slice();
             const local = checkWinner(boards[b]);
             if (local) boardWinners[b] = local;
-            
-            const macroResult = checkWinner(boardWinners.map(w => (w === "draw" ? null : w)));
-            
+
+            const macroResult = checkWinner(boardWinners.map(w => w === "draw" ? null : w));
+
             let nextActive = c;
             if (boardWinners[c]) nextActive = null;
-            
+
             const newState = {
                 ...s,
-                boards: boards,
-                boardWinners: boardWinners,
+                boards,
+                boardWinners,
             };
-            
+
             if (macroResult) {
                 newState.winner = macroResult;
             } else if (boardWinners.every(w => w !== null)) {
@@ -486,43 +431,41 @@
                 newState.activeBoard = nextActive;
                 newState.turn = mySymbol === "X" ? "O" : "X";
             }
-            
+
             gameRef.set(newState);
+            document.getElementById("status").innerText = "✅ تمت الحركة";
         }
 
-        /* =========================================================
-           8) زر إعادة الضبط
-           ========================================================= */
+        // ============================================================
+        // 8) إعادة الضبط
+        // ============================================================
         document.getElementById("reset").onclick = () => {
             if (!mySymbol) {
-                document.getElementById("status").innerText = "❌ لا يمكنك إعادة الضبط، اشترك أولاً!";
+                document.getElementById("status").innerText = "❌ اشترك أولاً";
                 return;
             }
             const s = emptyState();
             s.players.X = me;
             gameRef.set(s);
             mySymbol = "X";
-            document.getElementById("status").innerText = "🔄 تم إعادة الضبط!";
+            document.getElementById("status").innerText = "🔄 تم إعادة الضبط";
         };
 
-        /* =========================================================
-           9) بدء التشغيل
-           ========================================================= */
+        // ============================================================
+        // 9) البدء
+        // ============================================================
         joinGame();
+        console.log("👤", me, "🎮", gameId);
 
-        console.log("👤 المستخدم:", me);
-        console.log("🎮 معرف اللعبة:", gameId);
-        
-        const connectedRef = firebase.database().ref(".info/connected");
-        connectedRef.on("value", (snap) => {
+        firebase.database().ref(".info/connected").on("value", (snap) => {
             if (snap.val() === true) {
-                console.log("✅ متصل بـ Firebase");
-                const statusEl = document.getElementById("status");
-                if (statusEl.innerText === "⏳ جاري الاتصال…") {
-                    statusEl.innerText = "⏳ جاري تحميل اللعبة...";
+                console.log("✅ Firebase متصل");
+                const st = document.getElementById("status");
+                if (st.innerText === "⏳ جاري الاتصال…") {
+                    st.innerText = "⏳ جاري التحميل...";
                 }
             } else {
-                console.log("❌ غير متصل بـ Firebase");
+                console.log("❌ Firebase غير متصل");
                 document.getElementById("status").innerText = "⚠️ لا يوجد اتصال بالخادم";
             }
         });
