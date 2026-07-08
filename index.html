@@ -162,7 +162,7 @@
 <body>
 
     <h1>❌⭕ <span>إكس أو</span> الكبرى</h1>
-    <div id="status">⏳ جاري التحميل...</div>
+    <div id="status">⏳ جاري الاتصال بالخادم...</div>
     
     <div class="frame">
         <div class="macro" id="macro"></div>
@@ -172,7 +172,7 @@
 
     <script>
         // ============================================================
-        // 1) إعدادات Firebase (تم التحقق من صحتها)
+        // 1) إعدادات Firebase
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyA0RjsdEk85fnZgciH-z8Uu-JT4dN_BLYQ",
@@ -233,39 +233,43 @@
         }
 
         // ============================================================
-        // 3) تهيئة اللعبة (تم تبسيطها لجلب البيانات فوراً)
+        // 3) تهيئة اللعبة والاتصال بالـ DB
         // ============================================================
         const params = new URLSearchParams(location.search);
         const gameId = params.get("game") || "demo";
         const gameRef = db.ref("games/" + gameId);
         const me = getUser();
-        let mySymbol = null;
+        let mySymbol = null; 
+        let latestState = null; 
 
-        // دالة العرض الأساسية
         function render(s) {
-            if (!s) {
-                console.warn("⚠️ لا توجد بيانات للعرض");
-                return;
-            }
+            latestState = s;
             
-            // تحديث شريط الحالة
-            const xName = s.players?.X?.name || "؟";
-            const oName = s.players?.O?.name || "؟";
-            let statusText = `❎ ${xName}  |  ⭕ ${oName}`;
+            // تحديد الرمز ديناميكياً من السيرفر لمنع ثغرات التزامن
+            if (s.players?.X?.id === me.id) mySymbol = "X";
+            else if (s.players?.O?.id === me.id) mySymbol = "O";
+            else mySymbol = null;
+
+            const xName = s.players?.X?.name || "بانتظار لاعب...";
+            const oName = s.players?.O?.name || "بانتظار لاعب...";
+            
+            let roleBadge = mySymbol ? `(أنت ${mySymbol === 'X' ? '❎' : '⭕'})` : "(مُشاهد)";
+            let statusText = `❎ ${xName}  |  ⭕ ${oName} ${roleBadge}`;
             
             if (s.winner === "draw") {
-                statusText += "\n🤝 تعادل!";
+                statusText += "\n🤝 انتهت المباراة بالتعادل!";
             } else if (s.winner) {
-                statusText += `\n🎉 فاز: ${s.players[s.winner]?.name || s.winner}`;
-            } else if (!s.players?.O) {
-                statusText += "\n⏳ بانتظار لاعب ثانٍ";
+                statusText += `\n🎉 الفائز هو: ${s.players[s.winner]?.name || s.winner}`;
+            } else if (!s.players?.X || !s.players?.O) {
+                statusText += "\n⏳ بانتظار اكتمال اللاعبين لبدء التحدي...";
             } else {
                 const turnName = s.players[s.turn]?.name || s.turn;
-                statusText += `\n▶️ دور: ${turnName}`;
+                statusText += `\n▶️ دور: ${turnName} (${s.turn === 'X' ? '❎' : '⭕'})`;
+                if(s.turn === mySymbol) statusText += " 👈 دورك الآن!";
             }
+            
             document.getElementById("status").innerText = statusText;
             
-            // رسم اللوحات
             const macro = document.getElementById("macro");
             macro.innerHTML = "";
             
@@ -284,7 +288,7 @@
                     const val = s.boards[b][c];
                     btn.className = "cell" + (val === "X" ? " x" : val === "O" ? " o" : "");
                     btn.innerText = val === "X" ? "❎" : val === "O" ? "⭕" : "";
-                    btn.onclick = () => playMove(s, b, c);
+                    btn.onclick = () => playMove(b, c);
                     mini.appendChild(btn);
                 }
                 
@@ -303,61 +307,38 @@
                 macro.appendChild(mini);
             }
             
-            document.getElementById("reset").style.display = s.winner ? "block" : "none";
+            // إظهار زر إعادة التشغيل فقط للاعبين المشاركين عند انتهاء اللعبة
+            document.getElementById("reset").style.display = (s.winner && mySymbol) ? "block" : "none";
         }
 
         // ============================================================
         // 4) تنفيذ الحركة
         // ============================================================
-        function playMove(s, b, c) {
+        function playMove(b, c) {
+            const s = latestState;
+            if (!s) return;
+
             if (!mySymbol) {
-                // محاولة الانضمام كـ X أو O
-                if (!s.players?.X) {
-                    const newState = { ...s };
-                    newState.players.X = me;
-                    gameRef.set(newState);
-                    mySymbol = "X";
-                    document.getElementById("status").innerText = "✅ انضممت كـ ❎";
-                    return;
-                }
-                if (!s.players?.O && s.players?.X?.id !== me.id) {
-                    const newState = { ...s };
-                    newState.players.O = me;
-                    gameRef.set(newState);
-                    mySymbol = "O";
-                    document.getElementById("status").innerText = "✅ انضممت كـ ⭕";
-                    return;
-                }
-                document.getElementById("status").innerText = "❌ لا يمكنك الانضمام";
+                alert("🚫 أنت لست لاعباً في هذه المباراة (مشاهد فقط).");
                 return;
             }
-
-            if (s.winner) {
-                document.getElementById("status").innerText = "⛔ انتهت اللعبة";
+            if (!s.players.X || !s.players.O) {
+                alert("⏳ لا يمكن اللعب حتى ينضم اللاعب الثاني.");
                 return;
             }
+            if (s.winner) return;
             if (s.turn !== mySymbol) {
-                document.getElementById("status").innerText = "⏳ ليس دورك";
+                alert("⏳ ليس دورك، انتظر خصمك!");
                 return;
             }
-            if (!s.players?.O) {
-                document.getElementById("status").innerText = "⏳ بانتظار لاعب ثانٍ";
-                return;
-            }
-            if (s.boardWinners[b]) {
-                document.getElementById("status").innerText = "🚫 هذه اللوحة محسومة";
-                return;
-            }
+            if (s.boardWinners[b]) return;
             if (s.activeBoard !== null && s.activeBoard !== b) {
-                document.getElementById("status").innerText = `📍 لازم تلعب في اللوحة ${s.activeBoard + 1}`;
+                alert(`📍 تحذير: يجب أن تلعب داخل اللوحة رقم ${s.activeBoard + 1}`);
                 return;
             }
-            if (s.boards[b][c] !== null) {
-                document.getElementById("status").innerText = "🚫 هذا المربع محجوز";
-                return;
-            }
+            if (s.boards[b][c] !== null) return;
 
-            // تنفيذ الحركة
+            // تطبيق الحركة
             const boards = s.boards.map(row => row.slice());
             boards[b][c] = mySymbol;
 
@@ -370,11 +351,7 @@
             let nextActive = c;
             if (boardWinners[c]) nextActive = null;
 
-            const newState = {
-                ...s,
-                boards,
-                boardWinners,
-            };
+            const newState = { ...s, boards, boardWinners };
 
             if (macroResult) {
                 newState.winner = macroResult;
@@ -389,82 +366,68 @@
         }
 
         // ============================================================
-        // 5) الاتصال بقاعدة البيانات وعرض اللوحات فوراً
+        // 5) إدارة الانضمام التلقائي والدخول للغرفة
         // ============================================================
+        function handleJoin(s) {
+            // إذا لم يكن هناك لاعب X، سجل اللاعب الحالي كـ X فوراً
+            if (!s.players?.X) {
+                gameRef.child("players/X").set(me);
+                return true;
+            }
+            // إذا كان خانة O فارغة واللاعب الحالي ليس هو نفسه X، سجله كـ O
+            if (!s.players?.O && s.players?.X?.id !== me.id) {
+                gameRef.child("players/O").set(me);
+                return true;
+            }
+            return false;
+        }
+
         function startGame() {
-            // الاستماع الفوري لأي تغيير في قاعدة البيانات
             gameRef.on("value", (snap) => {
                 const data = snap.val();
-                if (data) {
-                    // تحديد رمز المستخدم
-                    if (data.players?.X?.id === me.id) mySymbol = "X";
-                    else if (data.players?.O?.id === me.id) mySymbol = "O";
-                    else {
-                        // إذا لم يكن اللاعب موجوداً، حاول الانضمام كـ X
-                        if (!data.players?.X) {
-                            const newState = { ...data };
-                            newState.players.X = me;
-                            gameRef.set(newState);
-                            mySymbol = "X";
-                        } else if (!data.players?.O && data.players?.X?.id !== me.id) {
-                            const newState = { ...data };
-                            newState.players.O = me;
-                            gameRef.set(newState);
-                            mySymbol = "O";
-                        }
-                    }
-                    render(data);
-                } else {
-                    // إذا لم توجد بيانات، أنشئ لعبة جديدة
+                if (!data) {
+                    // إنشاء غرفة جديدة تماماً إذا كانت فارغة
                     const newGame = emptyState();
                     newGame.players.X = me;
                     gameRef.set(newGame);
-                    mySymbol = "X";
+                } else {
+                    // محاولة إدخال اللاعب للغرفة تلقائياً إذا كان هناك مكان شاغر
+                    const joined = handleJoin(data);
+                    if (!joined) {
+                        render(data);
+                    }
                 }
             });
         }
 
         // ============================================================
-        // 6) زر إعادة الضبط
+        // 6) زر إعادة الضبط الذكي (يحافظ على اللاعبين)
         // ============================================================
         document.getElementById("reset").onclick = () => {
-            if (!mySymbol) {
-                document.getElementById("status").innerText = "❌ اشترك أولاً";
-                return;
-            }
-            const s = emptyState();
-            s.players.X = me;
-            gameRef.set(s);
-            mySymbol = "X";
-            document.getElementById("status").innerText = "🔄 تم إعادة الضبط";
+            if (!mySymbol || !latestState) return;
+            
+            const freshState = emptyState();
+            // الحفاظ على هويات اللاعبين لتسهيل الانتقام (Rematch) مباشرة دون الحاجة لإعادة التسجيل
+            freshState.players.X = latestState.players.X;
+            freshState.players.O = latestState.players.O;
+            
+            // تبديل الأدوار للعبة القادمة بشكل عادل (الخاسر يبدأ أو تبديل عشوائي)
+            freshState.turn = latestState.winner && latestState.winner !== 'draw' ? latestState.winner : "X";
+
+            gameRef.set(freshState);
         };
 
         // ============================================================
-        // 7) بدء التشغيل
+        // 7) الاتصال وبدء العمل
         // ============================================================
-        console.log("👤 المستخدم:", me);
-        console.log("🎮 معرف اللعبة:", gameId);
-        
-        // التحقق من اتصال Firebase
         db.ref('.info/connected').on('value', (snap) => {
             if (snap.val() === true) {
-                console.log("✅ متصل بـ Firebase");
-                document.getElementById("status").innerText = "✅ متصل... جاري تحميل اللعبة";
+                document.getElementById("status").innerText = "✅ متصل... جاري الدخول للغرفة";
                 startGame();
             } else {
-                console.log("❌ غير متصل بـ Firebase");
-                document.getElementById("status").innerText = "⚠️ لا يوجد اتصال بالخادم";
+                document.getElementById("status").innerText = "⚠️ انقطع الاتصال... جاري محاولة إعادة الاتصال";
             }
         });
-
-        // مؤقت احتياطي: إذا لم يستجب Firebase خلال 3 ثوان، اعرض لوحات تجريبية
-        setTimeout(() => {
-    const macro = document.getElementById("macro");
-    if (macro.children.length === 0) {
-        // عرض تجريبي
-    }
-}, 3000);
     </script>
-
 </body>
 </html>
