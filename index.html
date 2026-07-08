@@ -459,15 +459,11 @@
 
         // مؤقت احتياطي: إذا لم يستجب Firebase خلال 3 ثوان، اعرض لوحات تجريبية
         setTimeout(() => {
-            const macro = document.getElementById("macro");
-            if (macro.children.length === 0) {
-                console.warn("⚠️ Firebase لم يستجب، عرض لوحات تجريبية");
-                document.getElementById("status").innerText = "⚠️ جاري العرض التجريبي...";
-                const demo = emptyState();
-                demo.players.X = { id: "demo", name: "تجريبي" };
-                render(demo);
-            }
-        }, 3000);
+    const macro = document.getElementById("macro");
+    if (macro.children.length === 0) {
+        // عرض تجريبي
+    }
+}, 3000);
     </script>
 
 </body>
