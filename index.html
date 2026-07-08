@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title> اكس او العملاقة </title>
+    <title>إكس أو الكبرى</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -28,8 +28,8 @@
         }
         h1 {
             font-family: 'Rakkas', serif;
-            font-size: 28px;
-            margin: 0 0 4px;
+            font-size: 32px;
+            margin: 0 0 6px;
             text-align: center;
         }
         h1 span { color: #6FE7D2; }
@@ -37,15 +37,15 @@
         #status {
             text-align: center;
             color: #9FB0A6;
-            font-size: 14px;
-            margin-bottom: 12px;
-            min-height: 55px;
+            font-size: 16px;
+            margin-bottom: 16px;
+            min-height: 60px;
             white-space: pre-line;
-            line-height: 1.6;
-            padding: 6px 12px;
+            line-height: 1.8;
+            padding: 8px 16px;
             background: rgba(0,0,0,0.25);
-            border-radius: 8px;
-            max-width: 400px;
+            border-radius: 10px;
+            max-width: 480px;
             width: 100%;
             transition: all 0.3s;
         }
@@ -54,22 +54,23 @@
         #status.success { color: #6FE7D2; }
         
         .frame {
-            padding: 8px;
-            border-radius: 12px;
-            background: repeating-linear-gradient(115deg, #6b4a30, #6b4a30 5px, #5c3e28 5px, #5c3e28 10px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+            padding: 12px;
+            border-radius: 16px;
+            background: repeating-linear-gradient(115deg, #6b4a30, #6b4a30 6px, #5c3e28 6px, #5c3e28 12px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+            max-width: 100%;
         }
         
         .macro {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
-            padding: 5px;
+            gap: 8px;
+            padding: 8px;
             background: #1c2e22;
-            border-radius: 8px;
-            box-shadow: inset 0 0 25px rgba(0,0,0,0.4);
+            border-radius: 10px;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.4);
             width: 100%;
-            max-width: 380px;
+            max-width: 480px;
             margin: 0 auto;
         }
         
@@ -78,13 +79,13 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             background: rgba(255,255,255,0.02);
-            border-radius: 6px;
+            border-radius: 8px;
             box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
             aspect-ratio: 1;
             transition: all 0.2s;
         }
         .mini.active { 
-            box-shadow: 0 0 0 2px #6FE7D2aa, 0 0 15px #6FE7D244; 
+            box-shadow: 0 0 0 2px #6FE7D2aa, 0 0 20px #6FE7D244; 
             background: rgba(255,255,255,0.06); 
         }
         .mini.won { opacity: 0.5; }
@@ -96,7 +97,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(18px, 4.5vw, 26px);
+            font-size: clamp(26px, 6.5vw, 38px);
             background: transparent;
             border: none;
             color: inherit;
@@ -105,13 +106,13 @@
             aspect-ratio: 1;
             border-radius: 4px;
         }
-        .cell:hover { background: rgba(255,255,255,0.03); }
+        .cell:hover { background: rgba(255,255,255,0.04); }
         .cell:active { 
-            background: rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.1);
             transform: scale(0.92);
         }
-        .cell.x { color: #6FE7D2; text-shadow: 0 0 8px #6FE7D244; }
-        .cell.o { color: #FFA05C; text-shadow: 0 0 8px #FFA05C44; }
+        .cell.x { color: #6FE7D2; text-shadow: 0 0 12px #6FE7D244; }
+        .cell.o { color: #FFA05C; text-shadow: 0 0 12px #FFA05C44; }
         .cell.disabled { cursor: not-allowed; opacity: 0.5; }
         
         .mini-winner {
@@ -120,9 +121,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(30px, 8vw, 46px);
-            background: rgba(16,24,18,0.82);
-            border-radius: 6px;
+            font-size: clamp(44px, 11vw, 68px);
+            background: rgba(16,24,18,0.85);
+            border-radius: 8px;
             pointer-events: none;
             animation: fadeIn 0.3s ease;
         }
@@ -137,11 +138,11 @@
         
         .badge {
             position: absolute;
-            top: -5px;
-            right: -5px;
-            width: 18px;
-            height: 18px;
-            font-size: 9px;
+            top: -6px;
+            right: -6px;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -153,29 +154,29 @@
         }
         
         #reset {
-            margin-top: 14px;
-            padding: 8px 20px;
-            border-radius: 8px;
+            margin-top: 16px;
+            padding: 10px 28px;
+            border-radius: 10px;
             border: 1.5px dashed rgba(255,255,255,0.25);
-            background: rgba(255,255,255,0.02);
+            background: rgba(255,255,255,0.03);
             color: #9FB0A6;
             font-family: 'Cairo', sans-serif;
-            font-size: 14px;
+            font-size: 16px;
             cursor: pointer;
             transition: all 0.2s;
             display: none;
         }
-        #reset:active { background: rgba(255,255,255,0.06); }
+        #reset:active { background: rgba(255,255,255,0.08); }
         #reset.show { display: block; }
         
         #loading-indicator {
             display: none;
             margin-top: 8px;
-            padding: 4px 12px;
+            padding: 6px 16px;
             border-radius: 20px;
             background: rgba(255,217,61,0.15);
             color: #FFD93D;
-            font-size: 12px;
+            font-size: 14px;
             animation: pulse 1s infinite;
         }
         #loading-indicator.show { display: inline-block; }
@@ -185,8 +186,18 @@
             50% { opacity: 0.5; }
         }
         
-        @media (max-width: 420px) {
+        @media (max-width: 480px) {
+            .macro { gap: 6px; padding: 6px; max-width: 100%; }
+            .frame { padding: 8px; }
+            #status { font-size: 14px; min-height: 50px; padding: 6px 12px; }
+            h1 { font-size: 26px; }
+            .badge { width: 18px; height: 18px; font-size: 9px; top: -5px; right: -5px; }
+        }
+        
+        @media (max-width: 380px) {
             .macro { gap: 4px; padding: 4px; }
+            .cell { font-size: clamp(20px, 5vw, 28px); }
+            .mini-winner { font-size: clamp(32px, 9vw, 48px); }
             .frame { padding: 5px; }
             #status { font-size: 12px; min-height: 44px; }
             h1 { font-size: 22px; }
@@ -238,7 +249,6 @@
         }
 
         function checkMacroWinner(boardWinners) {
-            // تحويل draw إلى null للفحص
             const mapped = boardWinners.map(w => w === "draw" ? null : w);
             return checkWinner(mapped);
         }
@@ -299,7 +309,6 @@
         // 4) Player Manager
         // ============================================================
         function setupPlayerCleanup() {
-            // حذف اللاعب عند الخروج
             if (mySymbol) {
                 const playerRef = gameRef.child("players/" + mySymbol);
                 playerRef.onDisconnect().remove().catch(console.error);
@@ -336,29 +345,23 @@
         }
 
         // ============================================================
-        // 5) Renderer (محسّن: تحديث الخلايا فقط)
+        // 5) Renderer
         // ============================================================
-        let cachedBoards = null;
-        let cachedWinners = null;
-
         function render(s) {
             if (!s) {
                 tryJoinTransaction();
                 return;
             }
 
-            // تحديث الرمز
             if (s.players?.X?.id === me.id) mySymbol = "X";
             else if (s.players?.O?.id === me.id) mySymbol = "O";
             else mySymbol = null;
 
-            // تنظيف عند الخروج
             if (mySymbol && isFirstLoad) {
                 setupPlayerCleanup();
                 isFirstLoad = false;
             }
 
-            // تحديث الحالة
             const xName = s.players?.X?.name || "بانتظار لاعب...";
             const oName = s.players?.O?.name || "بانتظار لاعب...";
             const roleBadge = mySymbol ? `(أنت ${mySymbol === 'X' ? '❎' : '⭕'})` : "(👀 مشاهد)";
@@ -383,18 +386,11 @@
                 setStatus(statusText, isMyTurn ? 'success' : '');
             }
 
-            // إظهار زر إعادة اللعب
             const resetBtn = document.getElementById("reset");
-            if (s.winner && mySymbol) {
-                resetBtn.className = "show";
-            } else {
-                resetBtn.className = "";
-            }
+            resetBtn.className = (s.winner && mySymbol) ? "show" : "";
 
-            // رسم اللوحات (تحديث الخلايا فقط)
             const macro = document.getElementById("macro");
             
-            // إنشاء الهيكل مرة واحدة فقط
             if (isFirstLoad || macro.children.length === 0) {
                 macro.innerHTML = "";
                 for (let b = 0; b < 9; b++) {
@@ -420,11 +416,9 @@
                 }
             }
 
-            // تحديث الخلايا
             for (let b = 0; b < 9; b++) {
                 const mini = document.getElementById(`mini-${b}`);
                 
-                // تحديث حالة اللوحة
                 const isActive = !s.winner && 
                     !s.boardWinners[b] && 
                     (s.activeBoard === null || s.activeBoard === b);
@@ -433,11 +427,9 @@
                     (isActive ? " active" : "") + 
                     (s.boardWinners[b] ? " won" : "");
                 
-                // إزالة overlay القديم
                 const oldOverlay = mini.querySelector('.mini-winner');
                 if (oldOverlay) oldOverlay.remove();
                 
-                // إضافة overlay جديد إذا كانت اللوحة محسومة
                 if (s.boardWinners[b]) {
                     const ov = document.createElement("div");
                     const r = s.boardWinners[b];
@@ -446,7 +438,6 @@
                     mini.appendChild(ov);
                 }
                 
-                // تحديث الخلايا
                 for (let c = 0; c < 9; c++) {
                     const btn = document.getElementById(`cell-${b}-${c}`);
                     const val = s.boards[b][c];
@@ -456,9 +447,6 @@
                     btn.innerText = val === "X" ? "❎" : val === "O" ? "⭕" : "";
                 }
             }
-
-            cachedBoards = s.boards;
-            cachedWinners = s.boardWinners;
         }
 
         // ============================================================
@@ -470,7 +458,6 @@
                 if (data) {
                     render(data);
                 } else {
-                    // إنشاء غرفة جديدة
                     tryJoinTransaction();
                 }
             }, (err) => {
@@ -480,7 +467,7 @@
         }
 
         // ============================================================
-        // 7) Play Move (باستخدام Transaction)
+        // 7) Play Move
         // ============================================================
         function playMove(b, c) {
             if (moveLock) {
@@ -493,7 +480,6 @@
                 return;
             }
 
-            // التحقق المسبق من البيانات الحالية
             gameRef.once("value", (snap) => {
                 const s = snap.val();
                 if (!s) return;
@@ -523,7 +509,6 @@
                     return;
                 }
 
-                // تنفيذ الحركة باستخدام Transaction
                 moveLock = true;
                 showLoading(true);
                 setStatus("⏳ جاري إرسال الحركة...", "loading");
@@ -531,14 +516,12 @@
                 gameRef.transaction((current) => {
                     if (!current) return current;
                     
-                    // التحقق من صحة الحالة قبل التعديل
                     if (current.winner) return current;
                     if (current.turn !== mySymbol) return current;
                     if (current.boardWinners[b]) return current;
                     if (current.activeBoard !== null && current.activeBoard !== b) return current;
                     if (current.boards[b][c] !== null) return current;
                     
-                    // تطبيق الحركة
                     const boards = current.boards.map(row => row.slice());
                     boards[b][c] = mySymbol;
                     
@@ -601,7 +584,6 @@
                 if (!current.winner) return current;
                 
                 const fresh = emptyState();
-                // الحفاظ على اللاعبين
                 fresh.players.X = current.players.X;
                 fresh.players.O = current.players.O;
                 fresh.turn = "X";
@@ -632,7 +614,6 @@
         // ============================================================
         // 10) Initialization
         // ============================================================
-        // التحقق من الاتصال
         db.ref('.info/connected').on('value', (snap) => {
             if (snap.val() === true) {
                 console.log("✅ متصل بـ Firebase");
@@ -644,9 +625,8 @@
             }
         });
 
-        // مؤقت لإعادة الاتصال
         setInterval(() => {
-            if (!cachedBoards) {
+            if (!document.getElementById("macro").children.length) {
                 console.log("🔄 محاولة إعادة الاتصال...");
                 syncGame();
             }
@@ -657,7 +637,7 @@
         console.log("🔗 رابط المشاركة:", location.href);
 
         // ============================================================
-        // 11) معالجة الأخطاء العامة
+        // 11) Error Handling
         // ============================================================
         window.addEventListener('error', (e) => {
             console.error("Uncaught error:", e);
