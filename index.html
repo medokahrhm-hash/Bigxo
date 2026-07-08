@@ -39,7 +39,7 @@
             color: #9FB0A6;
             font-size: 14px;
             margin-bottom: 12px;
-            min-height: 50px;
+            min-height: 55px;
             white-space: pre-line;
             line-height: 1.6;
             padding: 6px 12px;
@@ -47,7 +47,11 @@
             border-radius: 8px;
             max-width: 400px;
             width: 100%;
+            transition: all 0.3s;
         }
+        #status.loading { color: #FFD93D; }
+        #status.error { color: #FF6B6B; }
+        #status.success { color: #6FE7D2; }
         
         .frame {
             padding: 8px;
@@ -77,12 +81,14 @@
             border-radius: 6px;
             box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
             aspect-ratio: 1;
+            transition: all 0.2s;
         }
         .mini.active { 
             box-shadow: 0 0 0 2px #6FE7D2aa, 0 0 15px #6FE7D244; 
             background: rgba(255,255,255,0.06); 
         }
         .mini.won { opacity: 0.5; }
+        .mini.highlight { box-shadow: 0 0 0 2px #FFD93Daa; }
         
         .cell {
             width: 100%;
@@ -95,14 +101,18 @@
             border: none;
             color: inherit;
             cursor: pointer;
-            transition: background 0.1s;
+            transition: background 0.1s, transform 0.1s;
             aspect-ratio: 1;
             border-radius: 4px;
         }
         .cell:hover { background: rgba(255,255,255,0.03); }
-        .cell:active { background: rgba(255,255,255,0.08); }
+        .cell:active { 
+            background: rgba(255,255,255,0.08);
+            transform: scale(0.92);
+        }
         .cell.x { color: #6FE7D2; text-shadow: 0 0 8px #6FE7D244; }
         .cell.o { color: #FFA05C; text-shadow: 0 0 8px #FFA05C44; }
+        .cell.disabled { cursor: not-allowed; opacity: 0.5; }
         
         .mini-winner {
             position: absolute;
@@ -114,10 +124,16 @@
             background: rgba(16,24,18,0.82);
             border-radius: 6px;
             pointer-events: none;
+            animation: fadeIn 0.3s ease;
         }
         .mini-winner.x { color: #6FE7D2cc; }
         .mini-winner.o { color: #FFA05Ccc; }
         .mini-winner.draw { color: #9FB0A6cc; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
         
         .badge {
             position: absolute;
@@ -150,6 +166,24 @@
             display: none;
         }
         #reset:active { background: rgba(255,255,255,0.06); }
+        #reset.show { display: block; }
+        
+        #loading-indicator {
+            display: none;
+            margin-top: 8px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(255,217,61,0.15);
+            color: #FFD93D;
+            font-size: 12px;
+            animation: pulse 1s infinite;
+        }
+        #loading-indicator.show { display: inline-block; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
         
         @media (max-width: 420px) {
             .macro { gap: 4px; padding: 4px; }
@@ -163,6 +197,7 @@
 
     <h1>❌⭕ <span>إكس أو</span> الكبرى</h1>
     <div id="status">⏳ جاري التحميل...</div>
+    <div id="loading-indicator">⏳ جاري إرسال الحركة...</div>
     
     <div class="frame">
         <div class="macro" id="macro"></div>
@@ -172,7 +207,7 @@
 
     <script>
         // ============================================================
-        // 1) إعدادات Firebase
+        // 1) Firebase Config
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyA0RjsdEk85fnZgciH-z8Uu-JT4dN_BLYQ",
@@ -184,7 +219,7 @@
         const db = firebase.database();
 
         // ============================================================
-        // 2) دوال مساعدة
+        // 2) Utilities
         // ============================================================
         const LINES = [
             [0,1,2],[3,4,5],[6,7,8],
@@ -200,6 +235,12 @@
             }
             if (cells.every(c => c !== null)) return "draw";
             return null;
+        }
+
+        function checkMacroWinner(boardWinners) {
+            // تحويل draw إلى null للفحص
+            const mapped = boardWinners.map(w => w === "draw" ? null : w);
+            return checkWinner(mapped);
         }
 
         function getUser() {
@@ -229,82 +270,174 @@
                 turn: "X",
                 players: { X: null, O: null },
                 winner: null,
+                lastMove: null,
             };
         }
 
+        function setStatus(text, type = '') {
+            const el = document.getElementById("status");
+            el.innerText = text;
+            el.className = type;
+        }
+
+        function showLoading(show) {
+            document.getElementById("loading-indicator").className = show ? "show" : "";
+        }
+
         // ============================================================
-        // 3) المتغيرات العامة
+        // 3) Game State
         // ============================================================
         const params = new URLSearchParams(location.search);
         const gameId = params.get("game") || "demo";
         const gameRef = db.ref("games/" + gameId);
         const me = getUser();
         let mySymbol = null;
-        let isFirstRender = true;
+        let moveLock = false;
+        let isFirstLoad = true;
 
         // ============================================================
-        // 4) دالة العرض الأساسية - مستقرة ولا تختفي
+        // 4) Player Manager
         // ============================================================
+        function setupPlayerCleanup() {
+            // حذف اللاعب عند الخروج
+            if (mySymbol) {
+                const playerRef = gameRef.child("players/" + mySymbol);
+                playerRef.onDisconnect().remove().catch(console.error);
+            }
+        }
+
+        function tryJoinTransaction() {
+            gameRef.transaction((current) => {
+                if (!current) {
+                    const s = emptyState();
+                    s.players.X = me;
+                    s.lastMove = Date.now();
+                    return s;
+                }
+                if (current.players?.X?.id === me.id) return current;
+                if (current.players?.O?.id === me.id) return current;
+                if (!current.players?.X) {
+                    current.players.X = me;
+                    current.lastMove = Date.now();
+                    return current;
+                }
+                if (!current.players?.O) {
+                    current.players.O = me;
+                    current.lastMove = Date.now();
+                    return current;
+                }
+                return current;
+            }, (err, committed, snap) => {
+                if (err) {
+                    console.error("Join error:", err);
+                    setStatus("❌ خطأ في الاتصال", "error");
+                }
+            });
+        }
+
+        // ============================================================
+        // 5) Renderer (محسّن: تحديث الخلايا فقط)
+        // ============================================================
+        let cachedBoards = null;
+        let cachedWinners = null;
+
         function render(s) {
             if (!s) {
-                // إذا لم تكن هناك بيانات، أنشئ لعبة فورية
-                const newGame = emptyState();
-                newGame.players.X = me;
-                gameRef.set(newGame);
+                tryJoinTransaction();
                 return;
             }
 
             // تحديث الرمز
             if (s.players?.X?.id === me.id) mySymbol = "X";
             else if (s.players?.O?.id === me.id) mySymbol = "O";
-            else {
-                // محاولة الانضمام التلقائي
-                tryJoin(s);
-                return;
+            else mySymbol = null;
+
+            // تنظيف عند الخروج
+            if (mySymbol && isFirstLoad) {
+                setupPlayerCleanup();
+                isFirstLoad = false;
             }
 
-            // تحديث النص
+            // تحديث الحالة
             const xName = s.players?.X?.name || "بانتظار لاعب...";
             const oName = s.players?.O?.name || "بانتظار لاعب...";
-            const roleBadge = mySymbol ? `(أنت ${mySymbol === 'X' ? '❎' : '⭕'})` : "(مُشاهد)";
+            const roleBadge = mySymbol ? `(أنت ${mySymbol === 'X' ? '❎' : '⭕'})` : "(👀 مشاهد)";
             let statusText = `❎ ${xName}  |  ⭕ ${oName} ${roleBadge}`;
             
             if (s.winner === "draw") {
                 statusText += "\n🤝 تعادل!";
+                setStatus(statusText, '');
             } else if (s.winner) {
-                statusText += `\n🎉 الفائز: ${s.players[s.winner]?.name || s.winner}`;
+                const winnerName = s.players[s.winner]?.name || s.winner;
+                const isMe = s.winner === mySymbol;
+                statusText += `\n${isMe ? '🎉' : '😔'} الفائز: ${winnerName}`;
+                setStatus(statusText, isMe ? 'success' : '');
             } else if (!s.players?.X || !s.players?.O) {
                 statusText += "\n⏳ بانتظار لاعب آخر...";
+                setStatus(statusText, '');
             } else {
                 const turnName = s.players[s.turn]?.name || s.turn;
+                const isMyTurn = s.turn === mySymbol;
                 statusText += `\n▶️ دور: ${turnName}`;
-                if (s.turn === mySymbol) statusText += " 👈 دورك!";
+                if (isMyTurn) statusText += " 👈 دورك!";
+                setStatus(statusText, isMyTurn ? 'success' : '');
             }
-            document.getElementById("status").innerText = statusText;
 
-            // رسم اللوحات (تظهر فوراً)
+            // إظهار زر إعادة اللعب
+            const resetBtn = document.getElementById("reset");
+            if (s.winner && mySymbol) {
+                resetBtn.className = "show";
+            } else {
+                resetBtn.className = "";
+            }
+
+            // رسم اللوحات (تحديث الخلايا فقط)
             const macro = document.getElementById("macro");
-            macro.innerHTML = "";
             
+            // إنشاء الهيكل مرة واحدة فقط
+            if (isFirstLoad || macro.children.length === 0) {
+                macro.innerHTML = "";
+                for (let b = 0; b < 9; b++) {
+                    const mini = document.createElement("div");
+                    mini.className = "mini";
+                    mini.id = `mini-${b}`;
+                    
+                    for (let c = 0; c < 9; c++) {
+                        const btn = document.createElement("button");
+                        btn.className = "cell";
+                        btn.id = `cell-${b}-${c}`;
+                        btn.setAttribute("data-board", b);
+                        btn.setAttribute("data-cell", c);
+                        btn.onclick = () => playMove(b, c);
+                        mini.appendChild(btn);
+                    }
+                    
+                    const badge = document.createElement("span");
+                    badge.className = "badge";
+                    badge.innerText = b + 1;
+                    mini.appendChild(badge);
+                    macro.appendChild(mini);
+                }
+            }
+
+            // تحديث الخلايا
             for (let b = 0; b < 9; b++) {
-                const mini = document.createElement("div");
-                mini.className = "mini";
+                const mini = document.getElementById(`mini-${b}`);
                 
+                // تحديث حالة اللوحة
                 const isActive = !s.winner && 
                     !s.boardWinners[b] && 
                     (s.activeBoard === null || s.activeBoard === b);
-                if (isActive) mini.classList.add("active");
-                if (s.boardWinners[b]) mini.classList.add("won");
                 
-                for (let c = 0; c < 9; c++) {
-                    const btn = document.createElement("button");
-                    const val = s.boards[b][c];
-                    btn.className = "cell" + (val === "X" ? " x" : val === "O" ? " o" : "");
-                    btn.innerText = val === "X" ? "❎" : val === "O" ? "⭕" : "";
-                    btn.onclick = () => playMove(b, c);
-                    mini.appendChild(btn);
-                }
+                mini.className = "mini" + 
+                    (isActive ? " active" : "") + 
+                    (s.boardWinners[b] ? " won" : "");
                 
+                // إزالة overlay القديم
+                const oldOverlay = mini.querySelector('.mini-winner');
+                if (oldOverlay) oldOverlay.remove();
+                
+                // إضافة overlay جديد إذا كانت اللوحة محسومة
                 if (s.boardWinners[b]) {
                     const ov = document.createElement("div");
                     const r = s.boardWinners[b];
@@ -313,134 +446,232 @@
                     mini.appendChild(ov);
                 }
                 
-                const badge = document.createElement("span");
-                badge.className = "badge";
-                badge.innerText = b + 1;
-                mini.appendChild(badge);
-                macro.appendChild(mini);
+                // تحديث الخلايا
+                for (let c = 0; c < 9; c++) {
+                    const btn = document.getElementById(`cell-${b}-${c}`);
+                    const val = s.boards[b][c];
+                    btn.className = "cell" + 
+                        (val === "X" ? " x" : val === "O" ? " o" : "") +
+                        (s.winner || !isActive ? " disabled" : "");
+                    btn.innerText = val === "X" ? "❎" : val === "O" ? "⭕" : "";
+                }
             }
-            
-            document.getElementById("reset").style.display = (s.winner && mySymbol) ? "block" : "none";
-            isFirstRender = false;
+
+            cachedBoards = s.boards;
+            cachedWinners = s.boardWinners;
         }
 
         // ============================================================
-        // 5) محاولة الانضمام التلقائي
+        // 6) Firebase Sync
         // ============================================================
-        function tryJoin(s) {
-            if (!s.players?.X) {
-                gameRef.child("players/X").set(me);
-                return;
-            }
-            if (!s.players?.O && s.players?.X?.id !== me.id) {
-                gameRef.child("players/O").set(me);
-                return;
-            }
-            // إذا كانت الغرفة مكتملة، اعرض كـ مشاهد
-            render(s);
-        }
-
-        // ============================================================
-        // 6) تنفيذ الحركة
-        // ============================================================
-        function playMove(b, c) {
-            gameRef.once("value", (snap) => {
-                const s = snap.val();
-                if (!s) return;
-
-                if (!mySymbol) {
-                    alert("🚫 أنت مشاهد فقط!");
-                    return;
-                }
-                if (!s.players.X || !s.players.O) {
-                    alert("⏳ بانتظار اللاعب الثاني!");
-                    return;
-                }
-                if (s.winner) return;
-                if (s.turn !== mySymbol) {
-                    alert("⏳ ليس دورك!");
-                    return;
-                }
-                if (s.boardWinners[b]) return;
-                if (s.activeBoard !== null && s.activeBoard !== b) {
-                    alert(`📍 العب في اللوحة ${s.activeBoard + 1}`);
-                    return;
-                }
-                if (s.boards[b][c] !== null) return;
-
-                const boards = s.boards.map(row => row.slice());
-                boards[b][c] = mySymbol;
-
-                const boardWinners = s.boardWinners.slice();
-                const local = checkWinner(boards[b]);
-                if (local) boardWinners[b] = local;
-
-                const macroResult = checkWinner(boardWinners.map(w => w === "draw" ? null : w));
-
-                let nextActive = c;
-                if (boardWinners[c]) nextActive = null;
-
-                const newState = { ...s, boards, boardWinners };
-
-                if (macroResult) {
-                    newState.winner = macroResult;
-                } else if (boardWinners.every(w => w !== null)) {
-                    newState.winner = "draw";
+        function syncGame() {
+            gameRef.on("value", (snap) => {
+                const data = snap.val();
+                if (data) {
+                    render(data);
                 } else {
-                    newState.activeBoard = nextActive;
-                    newState.turn = mySymbol === "X" ? "O" : "X";
+                    // إنشاء غرفة جديدة
+                    tryJoinTransaction();
                 }
-
-                gameRef.set(newState);
+            }, (err) => {
+                console.error("Sync error:", err);
+                setStatus("⚠️ انقطع الاتصال... جاري إعادة المحاولة", "error");
             });
         }
 
         // ============================================================
-        // 7) زر إعادة الضبط
+        // 7) Play Move (باستخدام Transaction)
         // ============================================================
-        document.getElementById("reset").onclick = () => {
-            if (!mySymbol) return;
+        function playMove(b, c) {
+            if (moveLock) {
+                setStatus("⏳ جاري تنفيذ حركة سابقة...", '');
+                return;
+            }
+
+            if (!mySymbol) {
+                setStatus("❌ أنت مشاهد فقط!", "error");
+                return;
+            }
+
+            // التحقق المسبق من البيانات الحالية
             gameRef.once("value", (snap) => {
                 const s = snap.val();
                 if (!s) return;
+
+                if (!s.players.X || !s.players.O) {
+                    setStatus("⏳ بانتظار اللاعب الثاني!", "");
+                    return;
+                }
+                if (s.winner) {
+                    setStatus("⛔ انتهت اللعبة!", "error");
+                    return;
+                }
+                if (s.turn !== mySymbol) {
+                    setStatus("⏳ ليس دورك!", "");
+                    return;
+                }
+                if (s.boardWinners[b]) {
+                    setStatus("🚫 هذه اللوحة محسومة!", "error");
+                    return;
+                }
+                if (s.activeBoard !== null && s.activeBoard !== b) {
+                    setStatus(`📍 العب في اللوحة ${s.activeBoard + 1}`, "");
+                    return;
+                }
+                if (s.boards[b][c] !== null) {
+                    setStatus("🚫 هذا المربع محجوز!", "error");
+                    return;
+                }
+
+                // تنفيذ الحركة باستخدام Transaction
+                moveLock = true;
+                showLoading(true);
+                setStatus("⏳ جاري إرسال الحركة...", "loading");
+
+                gameRef.transaction((current) => {
+                    if (!current) return current;
+                    
+                    // التحقق من صحة الحالة قبل التعديل
+                    if (current.winner) return current;
+                    if (current.turn !== mySymbol) return current;
+                    if (current.boardWinners[b]) return current;
+                    if (current.activeBoard !== null && current.activeBoard !== b) return current;
+                    if (current.boards[b][c] !== null) return current;
+                    
+                    // تطبيق الحركة
+                    const boards = current.boards.map(row => row.slice());
+                    boards[b][c] = mySymbol;
+                    
+                    const boardWinners = current.boardWinners.slice();
+                    const local = checkWinner(boards[b]);
+                    if (local) boardWinners[b] = local;
+                    
+                    const macroResult = checkMacroWinner(boardWinners);
+                    
+                    let nextActive = c;
+                    if (boardWinners[c]) nextActive = null;
+                    
+                    const newState = {
+                        ...current,
+                        boards,
+                        boardWinners,
+                        lastMove: Date.now(),
+                    };
+                    
+                    if (macroResult) {
+                        newState.winner = macroResult;
+                    } else if (boardWinners.every(w => w !== null)) {
+                        newState.winner = "draw";
+                    } else {
+                        newState.activeBoard = nextActive;
+                        newState.turn = mySymbol === "X" ? "O" : "X";
+                    }
+                    
+                    return newState;
+                }, (err, committed, snap) => {
+                    moveLock = false;
+                    showLoading(false);
+                    
+                    if (err) {
+                        console.error("Move error:", err);
+                        setStatus("❌ خطأ في إرسال الحركة!", "error");
+                        return;
+                    }
+                    
+                    if (!committed) {
+                        setStatus("⚠️ تم تعديل اللعبة أثناء إرسال الحركة، حاول مرة أخرى", "");
+                    } else {
+                        setStatus("✅ تمت الحركة!", "success");
+                    }
+                });
+            });
+        }
+
+        // ============================================================
+        // 8) Reset Game
+        // ============================================================
+        document.getElementById("reset").onclick = () => {
+            if (!mySymbol) {
+                setStatus("❌ أنت مشاهد فقط!", "error");
+                return;
+            }
+            
+            gameRef.transaction((current) => {
+                if (!current) return current;
+                if (!current.winner) return current;
+                
                 const fresh = emptyState();
-                fresh.players.X = s.players.X;
-                fresh.players.O = s.players.O;
+                // الحفاظ على اللاعبين
+                fresh.players.X = current.players.X;
+                fresh.players.O = current.players.O;
                 fresh.turn = "X";
-                gameRef.set(fresh);
+                fresh.lastMove = Date.now();
+                return fresh;
+            }, (err, committed, snap) => {
+                if (err) {
+                    console.error("Reset error:", err);
+                    setStatus("❌ خطأ في إعادة اللعبة!", "error");
+                } else if (committed) {
+                    setStatus("🔄 تم إعادة اللعبة!", "success");
+                }
             });
         };
 
         // ============================================================
-        // 8) تشغيل البث المباشر
+        // 9) Telegram WebApp
         // ============================================================
-        function startGame() {
-            gameRef.on("value", (snap) => {
-                const data = snap.val();
-                if (!data) {
-                    const newGame = emptyState();
-                    newGame.players.X = me;
-                    gameRef.set(newGame);
-                } else {
-                    render(data);
-                }
-            });
+        try {
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
+            }
+        } catch (e) {
+            console.log("Not in Telegram WebApp");
         }
 
         // ============================================================
-        // 9) بدء التشغيل
+        // 10) Initialization
         // ============================================================
+        // التحقق من الاتصال
         db.ref('.info/connected').on('value', (snap) => {
             if (snap.val() === true) {
-                document.getElementById("status").innerText = "✅ متصل... جاري التحميل";
-                startGame();
+                console.log("✅ متصل بـ Firebase");
+                setStatus("✅ متصل... جاري التحميل", "success");
+                syncGame();
             } else {
-                document.getElementById("status").innerText = "⚠️ جاري إعادة الاتصال...";
+                console.log("❌ غير متصل بـ Firebase");
+                setStatus("⚠️ جاري إعادة الاتصال...", "error");
             }
         });
 
+        // مؤقت لإعادة الاتصال
+        setInterval(() => {
+            if (!cachedBoards) {
+                console.log("🔄 محاولة إعادة الاتصال...");
+                syncGame();
+            }
+        }, 30000);
+
         console.log("👤 المستخدم:", me);
         console.log("🎮 معرف اللعبة:", gameId);
+        console.log("🔗 رابط المشاركة:", location.href);
+
+        // ============================================================
+        // 11) معالجة الأخطاء العامة
+        // ============================================================
+        window.addEventListener('error', (e) => {
+            console.error("Uncaught error:", e);
+            setStatus("⚠️ حدث خطأ غير متوقع", "error");
+        });
+
+        window.addEventListener('offline', () => {
+            setStatus("⚠️ انقطع الاتصال بالإنترنت", "error");
+        });
+
+        window.addEventListener('online', () => {
+            setStatus("🔄 تم استعادة الاتصال، جاري التحديث...", "success");
+            syncGame();
+        });
     </script>
 
 </body>
