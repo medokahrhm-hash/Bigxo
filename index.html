@@ -1,109 +1,516 @@
-<title>إكس أو الكبرى</title> <script src="https://telegram.org/js/telegram-web-app.js"></script> <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script> <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script> <style> @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Rakkas&display=swap');
-{ box-sizing: border-box; }
-body {
-margin: 0;
-min-height: 100vh;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center;
-padding: 24px 12px;
-background: radial-gradient(ellipse at 25% 15%, #24382c 0%, #1a2b21 45%, #10201799 100%), #16241c;
-font-family: 'Cairo', 'Segoe UI', sans-serif;
-color: #EDEFEA;
-}
-h1 {
-font-family: 'Rakkas', serif;
-font-size: 32px;
-margin: 0 0 4px;
-text-align: center;
-}
-h1 span { color: #6FE7D2; }
-#status {
-text-align: center;
-color: #9FB0A6;
-font-size: 14px;
-margin-bottom: 16px;
-min-height: 40px;
-white-space: pre-line;
-}
-.frame {
-padding: 10px;
-border-radius: 12px;
-background: repeating-linear-gradient(115deg, #6b4a30, #6b4a30 6px, #5c3e28 6px, #5c3e28 12px);
-box-shadow: 0 10px 30px rgba(0,0,0,0.45);
-}
-.macro {
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-gap: 6px;
-padding: 6px;
-background: #1c2e22;
-border-radius: 8px;
-box-shadow: inset 0 0 25px rgba(0,0,0,0.4);
-}
-.mini {
-position: relative;
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-background: rgba(255,255,255,0.02);
-border-radius: 6px;
-box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
-}
-.mini.active { box-shadow: 0 0 0 2px #6FE7D2aa; background: rgba(255,255,255,0.05); }
-.cell {
-width: 34px;
-height: 34px;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 16px;
-background: transparent;
-border: none;
-color: inherit;
-cursor: pointer;
-}
-.cell.x { color: #6FE7D2; text-shadow: 0 0 4px #6FE7D266; }
-.cell.o { color: #FFA05C; text-shadow: 0 0 4px #FFA05C66; }
-.mini-winner {
-position: absolute;
-inset: 0;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 34px;
-background: rgba(16,24,18,0.75);
-border-radius: 6px;
-}
-.mini-winner.x { color: #6FE7D2aa; }
-.mini-winner.o { color: #FFA05Caa; }
-.badge {
-position: absolute;
-top: -6px;
-right: -6px;
-width: 16px;
-height: 16px;
-font-size: 9px;
-display: flex;
-align-items: center;
-justify-content: center;
-background: #3a2c1e;
-color: #9FB0A6;
-border-radius: 50%;
-border: 1px solid rgba(255,255,255,0.15);
-}
-#reset {
-margin-top: 18px;
-padding: 8px 18px;
-border-radius: 8px;
-border: 1.5px dashed rgba(255,255,255,0.3);
-background: rgba(255,255,255,0.03);
-color: #9FB0A6;
-font-family: 'Cairo', sans-serif;
-cursor: pointer;
-}
-</style>
-إكس أو الكبرى
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>إكس أو الكبرى</title>
+    
+    <!-- مكتبات خارجية -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Rakkas&display=swap');
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 12px;
+            background: radial-gradient(ellipse at 25% 15%, #24382c 0%, #1a2b21 45%, #10201799 100%), #16241c;
+            font-family: 'Cairo', 'Segoe UI', sans-serif;
+            color: #EDEFEA;
+            user-select: none;
+        }
+        
+        h1 {
+            font-family: 'Rakkas', serif;
+            font-size: 32px;
+            margin: 0 0 4px;
+            text-align: center;
+        }
+        h1 span { color: #6FE7D2; }
+        
+        #status {
+            text-align: center;
+            color: #9FB0A6;
+            font-size: 14px;
+            margin-bottom: 16px;
+            min-height: 40px;
+            white-space: pre-line;
+            line-height: 1.6;
+            padding: 4px 8px;
+        }
+        
+        .frame {
+            padding: 10px;
+            border-radius: 12px;
+            background: repeating-linear-gradient(115deg, #6b4a30, #6b4a30 6px, #5c3e28 6px, #5c3e28 12px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        
+        .macro {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            padding: 6px;
+            background: #1c2e22;
+            border-radius: 8px;
+            box-shadow: inset 0 0 25px rgba(0,0,0,0.4);
+            min-width: 280px;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .mini {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            background: rgba(255,255,255,0.02);
+            border-radius: 6px;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+            aspect-ratio: 1;
+        }
+        .mini.active { 
+            box-shadow: 0 0 0 2px #6FE7D2aa; 
+            background: rgba(255,255,255,0.05); 
+        }
+        .mini.won { 
+            opacity: 0.6; 
+        }
+        
+        .cell {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(16px, 4vw, 24px);
+            background: transparent;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            transition: background 0.15s;
+            aspect-ratio: 1;
+        }
+        .cell:active {
+            background: rgba(255,255,255,0.05);
+        }
+        .cell.x { color: #6FE7D2; text-shadow: 0 0 4px #6FE7D266; }
+        .cell.o { color: #FFA05C; text-shadow: 0 0 4px #FFA05C66; }
+        
+        .mini-winner {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(28px, 7vw, 42px);
+            background: rgba(16,24,18,0.8);
+            border-radius: 6px;
+            pointer-events: none;
+        }
+        .mini-winner.x { color: #6FE7D2aa; }
+        .mini-winner.o { color: #FFA05Caa; }
+        .mini-winner.draw { color: #9FB0A6aa; }
+        
+        .badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 18px;
+            height: 18px;
+            font-size: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #3a2c1e;
+            color: #9FB0A6;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.15);
+            font-weight: 700;
+        }
+        
+        #reset {
+            margin-top: 18px;
+            padding: 10px 24px;
+            border-radius: 8px;
+            border: 1.5px dashed rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.03);
+            color: #9FB0A6;
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: none;
+        }
+        #reset:active {
+            background: rgba(255,255,255,0.08);
+        }
+        
+        .error-message {
+            color: #FF6B6B;
+            background: rgba(255,0,0,0.1);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,0,0,0.2);
+            margin: 8px 0;
+        }
+        
+        /* تحسينات للشاشات الصغيرة */
+        @media (max-width: 420px) {
+            .macro { gap: 4px; padding: 4px; min-width: unset; }
+            .frame { padding: 6px; }
+            #status { font-size: 12px; min-height: 32px; }
+            h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
 
-جاري الاتصال…
-🔄 لعبة جديدة بنفس الرابط <script> /* ========================================================= 1) إعدادات Firebase — عدّل هذا القسم بمعلومات مشروعك ========================================================= */ const firebaseConfig = { apiKey: "AIzaSyA0RjsdEk85fnZgciH-z8Uu-JT4dN_BLYQ", authDomain: "xobot-d7b7f.firebaseapp.com", databaseURL: "[https://PUT_PROJECT_ID-default-rtdb.firebaseio.com](https://xobot-d7b7f-default-rtdb.europe-west1.firebasedatabase.app)", projectId: "xobot-d7b7f", }; firebase.initializeApp(firebaseConfig); const db = firebase.database(); /* ========================================================= */ const LINES = [ [0,1,2],[3,4,5],[6,7,8], [0,3,6],[1,4,7],[2,5,8], [0,4,8],[2,4,6], ]; function checkWinner(cells) { for (const [a,b,c] of LINES) { if (cells[a] && cells[a] === cells[b] && cells[a] === cells[c]) return cells[a]; } if (cells.every(c => c !== null)) return "draw"; return null; } const tg = window.Telegram?.WebApp; if (tg) { tg.ready(); tg.expand(); } function getUser() { const tgUser = tg?.initDataUnsafe?.user; if (tgUser) return { id: String(tgUser.id), name: tgUser.first_name || "لاعب" }; // fallback للاختبار خارج تلغرام let id = localStorage.getItem("guest_id"); if (!id) { id = "guest_" + Math.random().toString(36).slice(2, 8); localStorage.setItem("guest_id", id); } const name = prompt("اكتب اسمك (وضع اختبار خارج تلغرام):", "لاعب") || "لاعب"; return { id, name }; } const params = new URLSearchParams(location.search); const gameId = params.get("game") || "demo"; const gameRef = db.ref("games/" + gameId); const me = getUser(); let mySymbol = null; function emptyState() { return { boards: Array.from({length:9}, () => Array(9).fill(null)), boardWinners: Array(9).fill(null), activeBoard: null, turn: "X", players: { X: null, O: null }, winner: null, }; } // حاول تنضم كـ X أو O (transaction عشان ما يصير تعارض لو ضغط الاثنين بنفس اللحظة) gameRef.transaction((current) => { if (!current) { const s = emptyState(); s.players.X = me; return s; } if (current.players?.X?.id === me.id) return current; if (current.players?.O?.id === me.id) return current; if (!current.players?.X) { current.players.X = me; return current; } if (!current.players?.O) { current.players.O = me; return current; } return current; // اللعبة معبّاة، بتكون متفرج بس }, (err, committed, snap) => { const s = snap.val(); if (s.players?.X?.id === me.id) mySymbol = "X"; else if (s.players?.O?.id === me.id) mySymbol = "O"; gameRef.on("value", (snap2) => render(snap2.val())); }); function statusText(s) { const xName = s.players?.X?.name || "بانتظار لاعب"; const oName = s.players?.O?.name || "بانتظار لاعب"; let line = `❎ ${xName} | ⭕ ${oName}`; if (s.winner === "draw") line += "\n🤝 تعادل!"; else if (s.winner) line += `\n🎉 فاز: ${s.players[s.winner]?.name} (${s.winner === "X" ? "❎" : "⭕"})`; else if (!s.players.O) line += "\n⏳ بانتظار انضمام لاعب ثانٍ…"; else { const turnName = s.players[s.turn]?.name; line += `\n▶️ دور: ${turnName} (${s.turn === "X" ? "❎" : "⭕"})`; if (!mySymbol) line += "\n👀 أنت بوضع المشاهدة"; } return line; } function render(s) { if (!s) return; document.getElementById("status").innerText = statusText(s); document.getElementById("reset").style.display = s.winner ? "block" : "none"; const macro = document.getElementById("macro"); macro.innerHTML = ""; for (let b = 0; b < 9; b++) { const mini = document.createElement("div"); mini.className = "mini" + (s.activeBoard === null || s.activeBoard === b ? (s.boardWinners[b] || s.winner ? "" : " active") : ""); for (let c = 0; c < 9; c++) { const btn = document.createElement("button"); const val = s.boards[b][c]; btn.className = "cell" + (val === "X" ? " x" : val === "O" ? " o" : ""); btn.innerText = val === "X" ? "❎" : val === "O" ? "⭕" : ""; btn.onclick = () => playMove(s, b, c); mini.appendChild(btn); } if (s.boardWinners[b]) { const overlay = document.createElement("div"); overlay.className = "mini-winner " + (s.boardWinners[b] === "X" ? "x" : s.boardWinners[b] === "O" ? "o" : ""); overlay.innerText = s.boardWinners[b] === "draw" ? "➖" : s.boardWinners[b] === "X" ? "❎" : "⭕"; mini.appendChild(overlay); } const badge = document.createElement("span"); badge.className = "badge"; badge.innerText = b + 1; mini.appendChild(badge); macro.appendChild(mini); } } function playMove(s, b, c) { if (!mySymbol || s.winner || s.turn !== mySymbol) return; if (!s.players.O) return; if (s.boardWinners[b]) return; if (s.activeBoard !== null && s.activeBoard !== b) return; if (s.boards[b][c] !== null) return; const boards = s.boards.map(row => row.slice()); boards[b][c] = mySymbol; const boardWinners = s.boardWinners.slice(); const local = checkWinner(boards[b]); if (local) boardWinners[b] = local; const macroResult = checkWinner(boardWinners.map(w => (w === "draw" ? null : w))); let nextActive = c; if (boardWinners[c]) nextActive = null; const newState = { ...s, boards, boardWinners }; if (macroResult) { newState.winner = macroResult; } else if (boardWinners.every(w => w !== null)) { newState.winner = "draw"; } else { newState.activeBoard = nextActive; newState.turn = mySymbol === "X" ? "O" : "X"; } gameRef.set(newState); } document.getElementById("reset").onclick = () => { const s = emptyState(); s.players.X = me; gameRef.set(s); mySymbol = "X"; }; </script>
+    <h1>❌⭕ <span>إكس أو</span> الكبرى</h1>
+    <div id="status">⏳ جاري الاتصال…</div>
+    
+    <div class="frame">
+        <div class="macro" id="macro">
+            <!-- سيتم إنشاء الأزرار بواسطة JavaScript -->
+        </div>
+    </div>
+    
+    <button id="reset">🔄 لعبة جديدة بنفس الرابط</button>
+
+    <script>
+        /* =========================================================
+           1) إعدادات Firebase — عدّل هذا القسم بمعلومات مشروعك
+           ========================================================= */
+        const firebaseConfig = {
+            apiKey: "AIzaSyA0RjsdEk85fnZgciH-z8Uu-JT4dN_BLYQ",
+            authDomain: "xobot-d7b7f.firebaseapp.com",
+            databaseURL: "https://xobot-d7b7f-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "xobot-d7b7f",
+        };
+        
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        /* =========================================================
+           2) الثوابت والدوال المساعدة
+           ========================================================= */
+        const LINES = [
+            [0,1,2],[3,4,5],[6,7,8],
+            [0,3,6],[1,4,7],[2,5,8],
+            [0,4,8],[2,4,6],
+        ];
+
+        function checkWinner(cells) {
+            for (const [a,b,c] of LINES) {
+                if (cells[a] && cells[a] === cells[b] && cells[a] === cells[c]) {
+                    return cells[a];
+                }
+            }
+            if (cells.every(c => c !== null)) return "draw";
+            return null;
+        }
+
+        /* =========================================================
+           3) الحصول على هوية المستخدم
+           ========================================================= */
+        function getUser() {
+            // محاولة الحصول على المستخدم من تلغرام
+            const tg = window.Telegram?.WebApp;
+            const tgUser = tg?.initDataUnsafe?.user;
+            
+            if (tgUser) {
+                return { 
+                    id: String(tgUser.id), 
+                    name: tgUser.first_name || "لاعب" 
+                };
+            }
+            
+            // إذا كنا خارج تلغرام، استخدم localStorage
+            let id = localStorage.getItem("guest_id");
+            if (!id) {
+                id = "guest_" + Math.random().toString(36).slice(2, 8);
+                localStorage.setItem("guest_id", id);
+            }
+            
+            let name = localStorage.getItem("guest_name");
+            if (!name) {
+                name = "لاعب_" + Math.random().toString(36).slice(2, 5);
+                localStorage.setItem("guest_name", name);
+            }
+            
+            return { id, name };
+        }
+
+        /* =========================================================
+           4) تهيئة اللعبة
+           ========================================================= */
+        const params = new URLSearchParams(location.search);
+        const gameId = params.get("game") || "demo";
+        const gameRef = db.ref("games/" + gameId);
+        const me = getUser();
+        let mySymbol = null;
+        let gameData = null;
+
+        function emptyState() {
+            return {
+                boards: Array.from({length:9}, () => Array(9).fill(null)),
+                boardWinners: Array(9).fill(null),
+                activeBoard: null,
+                turn: "X",
+                players: { X: null, O: null },
+                winner: null,
+            };
+        }
+
+        /* =========================================================
+           5) الانضمام للعبة
+           ========================================================= */
+        function joinGame() {
+            gameRef.transaction((current) => {
+                if (!current) {
+                    const s = emptyState();
+                    s.players.X = me;
+                    return s;
+                }
+                if (current.players?.X?.id === me.id) return current;
+                if (current.players?.O?.id === me.id) return current;
+                if (!current.players?.X) {
+                    current.players.X = me;
+                    return current;
+                }
+                if (!current.players?.O) {
+                    current.players.O = me;
+                    return current;
+                }
+                return current;
+            }, (err, committed, snap) => {
+                if (err) {
+                    console.error("خطأ في الانضمام:", err);
+                    document.getElementById("status").innerText = "❌ خطأ في الاتصال بقاعدة البيانات";
+                    return;
+                }
+                
+                const s = snap.val();
+                if (!s) {
+                    document.getElementById("status").innerText = "❌ لم يتم إنشاء اللعبة";
+                    return;
+                }
+                
+                if (s.players?.X?.id === me.id) mySymbol = "X";
+                else if (s.players?.O?.id === me.id) mySymbol = "O";
+                else {
+                    document.getElementById("status").innerText = "👀 اللعبة مكتملة، أنت في وضع المشاهدة";
+                }
+                
+                // الاستماع للتحديثات
+                gameRef.on("value", (snap2) => {
+                    const data = snap2.val();
+                    if (data) {
+                        gameData = data;
+                        render(data);
+                    }
+                });
+            });
+        }
+
+        /* =========================================================
+           6) عرض اللعبة
+           ========================================================= */
+        function statusText(s) {
+            if (!s) return "⏳ جاري تحميل اللعبة...";
+            
+            const xName = s.players?.X?.name || "بانتظار لاعب";
+            const oName = s.players?.O?.name || "بانتظار لاعب";
+            let line = `❎ ${xName}  |  ⭕ ${oName}`;
+            
+            if (s.winner === "draw") {
+                line += "\n🤝 تعادل!";
+            } else if (s.winner) {
+                const winnerName = s.players[s.winner]?.name || s.winner;
+                const symbol = s.winner === "X" ? "❎" : "⭕";
+                line += `\n🎉 فاز: ${winnerName} (${symbol})`;
+            } else if (!s.players?.O) {
+                line += "\n⏳ بانتظار انضمام لاعب ثانٍ…";
+            } else {
+                const turnName = s.players[s.turn]?.name || s.turn;
+                const symbol = s.turn === "X" ? "❎" : "⭕";
+                line += `\n▶️ دور: ${turnName} (${symbol})`;
+                if (!mySymbol) line += "\n👀 أنت بوضع المشاهدة";
+            }
+            return line;
+        }
+
+        function render(s) {
+            if (!s) return;
+            
+            const statusEl = document.getElementById("status");
+            statusEl.innerText = statusText(s);
+            
+            const resetBtn = document.getElementById("reset");
+            resetBtn.style.display = s.winner ? "block" : "none";
+            
+            const macro = document.getElementById("macro");
+            macro.innerHTML = "";
+            
+            for (let b = 0; b < 9; b++) {
+                const mini = document.createElement("div");
+                mini.className = "mini";
+                
+                // إضافة class active إذا كانت اللوحة نشطة
+                const isActive = (s.activeBoard === null || s.activeBoard === b) && !s.boardWinners[b] && !s.winner;
+                if (isActive) {
+                    mini.classList.add("active");
+                }
+                
+                if (s.boardWinners[b]) {
+                    mini.classList.add("won");
+                }
+                
+                for (let c = 0; c < 9; c++) {
+                    const btn = document.createElement("button");
+                    const val = s.boards[b][c];
+                    btn.className = "cell" + (val === "X" ? " x" : val === "O" ? " o" : "");
+                    btn.innerText = val === "X" ? "❎" : val === "O" ? "⭕" : "";
+                    btn.setAttribute("data-board", b);
+                    btn.setAttribute("data-cell", c);
+                    btn.onclick = () => playMove(s, b, c);
+                    mini.appendChild(btn);
+                }
+                
+                if (s.boardWinners[b]) {
+                    const overlay = document.createElement("div");
+                    const result = s.boardWinners[b];
+                    overlay.className = "mini-winner " + (result === "X" ? "x" : result === "O" ? "o" : "draw");
+                    overlay.innerText = result === "draw" ? "➖" : result === "X" ? "❎" : "⭕";
+                    mini.appendChild(overlay);
+                }
+                
+                const badge = document.createElement("span");
+                badge.className = "badge";
+                badge.innerText = b + 1;
+                mini.appendChild(badge);
+                
+                macro.appendChild(mini);
+            }
+        }
+
+        /* =========================================================
+           7) تنفيذ الحركة
+           ========================================================= */
+        function playMove(s, b, c) {
+            // التحقق من صحة الحركة
+            if (!mySymbol) {
+                document.getElementById("status").innerText = "❌ لم تنضم للعبة بعد!";
+                return;
+            }
+            if (s.winner) {
+                document.getElementById("status").innerText = "⛔ انتهت اللعبة!";
+                return;
+            }
+            if (s.turn !== mySymbol) {
+                document.getElementById("status").innerText = "⏳ ليس دورك!";
+                return;
+            }
+            if (!s.players?.O) {
+                document.getElementById("status").innerText = "⏳ بانتظار لاعب ثانٍ…";
+                return;
+            }
+            if (s.boardWinners[b]) {
+                document.getElementById("status").innerText = "🚫 هذه اللوحة محسومة";
+                return;
+            }
+            if (s.activeBoard !== null && s.activeBoard !== b) {
+                document.getElementById("status").innerText = `📍 لازم تلعب في اللوحة رقم ${s.activeBoard + 1}`;
+                return;
+            }
+            if (s.boards[b][c] !== null) {
+                document.getElementById("status").innerText = "🚫 هذا المربع محجوز";
+                return;
+            }
+            
+            // تنفيذ الحركة
+            const boards = s.boards.map(row => row.slice());
+            boards[b][c] = mySymbol;
+            
+            const boardWinners = s.boardWinners.slice();
+            const local = checkWinner(boards[b]);
+            if (local) boardWinners[b] = local;
+            
+            const macroResult = checkWinner(boardWinners.map(w => (w === "draw" ? null : w)));
+            
+            let nextActive = c;
+            if (boardWinners[c]) nextActive = null;
+            
+            const newState = {
+                ...s,
+                boards: boards,
+                boardWinners: boardWinners,
+            };
+            
+            if (macroResult) {
+                newState.winner = macroResult;
+            } else if (boardWinners.every(w => w !== null)) {
+                newState.winner = "draw";
+            } else {
+                newState.activeBoard = nextActive;
+                newState.turn = mySymbol === "X" ? "O" : "X";
+            }
+            
+            gameRef.set(newState);
+        }
+
+        /* =========================================================
+           8) زر إعادة الضبط
+           ========================================================= */
+        document.getElementById("reset").onclick = () => {
+            if (!mySymbol) {
+                document.getElementById("status").innerText = "❌ لا يمكنك إعادة الضبط، اشترك أولاً!";
+                return;
+            }
+            const s = emptyState();
+            s.players.X = me;
+            gameRef.set(s);
+            mySymbol = "X";
+            document.getElementById("status").innerText = "🔄 تم إعادة الضبط!";
+        };
+
+        /* =========================================================
+           9) بدء التشغيل
+           ========================================================= */
+        // بدء اللعبة
+        joinGame();
+
+        // إظهار اسم المستخدم في وحدة التحكم للتصحيح
+        console.log("👤 المستخدم:", me);
+        console.log("🎮 معرف اللعبة:", gameId);
+        
+        // التحقق من اتصال Firebase
+        const connectedRef = firebase.database().ref(".info/connected");
+        connectedRef.on("value", (snap) => {
+            if (snap.val() === true) {
+                console.log("✅ متصل بـ Firebase");
+                const statusEl = document.getElementById("status");
+                if (statusEl.innerText === "⏳ جاري الاتصال…") {
+                    statusEl.innerText = "⏳ جاري تحميل اللعبة...";
+                }
+            } else {
+                console.log("❌ غير متصل بـ Firebase");
+                document.getElementById("status").innerText = "⚠️ لا يوجد اتصال بالخادم";
+            }
+        });
+    </script>
+
+</body>
+</html>
