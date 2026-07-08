@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فحص Firebase</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; direction: rtl; background: #1a2b21; color: white; }
+        .box { background: #24382c; padding: 20px; border-radius: 10px; margin-top: 20px; }
+        button { background: #6FE7D2; color: #1a2b21; border: none; padding: 15px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; width: 100%; }
+        #result { margin-top: 20px; padding: 15px; background: #16241c; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>🔌 اختبار الاتصال بـ Firebase</h1>
+    <button onclick="testFirebase()">▶️ اضغط هنا لاختبار Firebase</button>
+    <div class="box" id="result">⏳ انتظر نتيجة الاختبار...</div>
+
+    <script>
+        // إعدادات Firebase (نسخها من مشروعك)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA0RjsdEk85fnZgciH-z8Uu-JT4dN_BLYQ",
+            authDomain: "xobot-d7b7f.firebaseapp.com",
+            databaseURL: "https://xobot-d7b7f-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "xobot-d7b7f",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const resultDiv = document.getElementById('result');
+
+        function testFirebase() {
+            resultDiv.innerHTML = "⏳ جاري الاتصال...";
+            
+            // 1. اختبار الاتصال الأساسي
+            const connectedRef = db.ref(".info/connected");
+            connectedRef.once("value")
+                .then(snap => {
+                    if (snap.val() === true) {
+                        resultDiv.innerHTML = "✅ **الخطوة 1: الاتصال بالإنترنت ناجح.**\nجاري اختبار القراءة والكتابة...";
+                        return testReadWrite();
+                    } else {
+                        resultDiv.innerHTML = "❌ **فشل الاتصال:** لا يوجد اتصال بالإنترنت أو الخادم.";
+                    }
+                })
+                .catch(err => {
+                    resultDiv.innerHTML = "❌ **خطأ في الاتصال:** " + err.message;
+                });
+        }
+
+        function testReadWrite() {
+            const testRef = db.ref("test_connection/" + Date.now());
+            const testData = { message: "Hello from phone!", time: new Date().toISOString() };
+
+            testRef.set(testData)
+                .then(() => {
+                    resultDiv.innerHTML = "✅ **الخطوة 2: الكتابة ناجحة.**\nجاري اختبار القراءة...";
+                    return testRef.once("value");
+                })
+                .then(snap => {
+                    const data = snap.val();
+                    if (data && data.message === testData.message) {
+                        resultDiv.innerHTML = "🎉 **نجاح كامل!**\n\n✅ Firebase يعمل بشكل مثالي على هاتفك.\nالبيانات التي تمت قراءتها:\n" + JSON.stringify(data, null, 2);
+                    } else {
+                        resultDiv.innerHTML = "⚠️ تمت الكتابة ولكن القراءة أعادت بيانات مختلفة.";
+                    }
+                })
+                .catch(err => {
+                    resultDiv.innerHTML = "❌ **فشل في القراءة/الكتابة:** " + err.message;
+                });
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فحص Firebase</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; direction: rtl; background: #1a2b21; color: white; }
+        .box { background: #24382c; padding: 20px; border-radius: 10px; margin-top: 20px; }
+        button { background: #6FE7D2; color: #1a2b21; border: none; padding: 15px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; width: 100%; }
+        #result { margin-top: 20px; padding: 15px; background: #16241c; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>🔌 اختبار الاتصال بـ Firebase</h1>
+    <button onclick="testFirebase()">▶️ اضغط هنا لاختبار Firebase</button>
+    <div class="box" id="result">⏳ انتظر نتيجة الاختبار...</div>
+
+    <script>
+        // إعدادات Firebase (نسخها من مشروعك)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA0RjsdEk85fnZgciH-z8Uu-JT4dN_BLYQ",
+            authDomain: "xobot-d7b7f.firebaseapp.com",
+            databaseURL: "https://xobot-d7b7f-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "xobot-d7b7f",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const resultDiv = document.getElementById('result');
+
+        function testFirebase() {
+            resultDiv.innerHTML = "⏳ جاري الاتصال...";
+            
+            // 1. اختبار الاتصال الأساسي
+            const connectedRef = db.ref(".info/connected");
+            connectedRef.once("value")
+                .then(snap => {
+                    if (snap.val() === true) {
+                        resultDiv.innerHTML = "✅ **الخطوة 1: الاتصال بالإنترنت ناجح.**\nجاري اختبار القراءة والكتابة...";
+                        return testReadWrite();
+                    } else {
+                        resultDiv.innerHTML = "❌ **فشل الاتصال:** لا يوجد اتصال بالإنترنت أو الخادم.";
+                    }
+                })
+                .catch(err => {
+                    resultDiv.innerHTML = "❌ **خطأ في الاتصال:** " + err.message;
+                });
+        }
+
+        function testReadWrite() {
+            const testRef = db.ref("test_connection/" + Date.now());
+            const testData = { message: "Hello from phone!", time: new Date().toISOString() };
+
+            testRef.set(testData)
+                .then(() => {
+                    resultDiv.innerHTML = "✅ **الخطوة 2: الكتابة ناجحة.**\nجاري اختبار القراءة...";
+                    return testRef.once("value");
+                })
+                .then(snap => {
+                    const data = snap.val();
+                    if (data && data.message === testData.message) {
+                        resultDiv.innerHTML = "🎉 **نجاح كامل!**\n\n✅ Firebase يعمل بشكل مثالي على هاتفك.\nالبيانات التي تمت قراءتها:\n" + JSON.stringify(data, null, 2);
+                    } else {
+                        resultDiv.innerHTML = "⚠️ تمت الكتابة ولكن القراءة أعادت بيانات مختلفة.";
+                    }
+                })
+                .catch(err => {
+                    resultDiv.innerHTML = "❌ **فشل في القراءة/الكتابة:** " + err.message;
+                });
+        }
+    </script>
+</body>
+</html>
